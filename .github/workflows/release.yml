@@ -69,6 +69,7 @@ jobs:
 
           sed -i '' "s/version \".*\"/version \"${VERSION}\"/" Casks/wisp.rb
           sed -i '' "s/sha256 \".*\"/sha256 \"${SHA}\"/" Casks/wisp.rb
+          sed -i '' 's/app "OpenSuperWhisper.app"/app "Wisp.app"/' Casks/wisp.rb
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
