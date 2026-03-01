@@ -27,7 +27,7 @@ Wisp is a macOS application that provides real-time audio transcription using th
 
 ```shell
 brew tap andrii-rubtsov/tap
-brew install --cask opensuperwhisper
+brew install --cask wisp
 ```
 
 Or download the DMG from the [Releases page](https://github.com/andrii-rubtsov/Wisp/releases).
