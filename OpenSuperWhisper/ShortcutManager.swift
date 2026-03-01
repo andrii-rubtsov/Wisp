@@ -42,6 +42,13 @@ class ShortcutManager {
             name: .indicatorWindowDidHide,
             object: nil
         )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(accessibilityPermissionGranted),
+            name: .accessibilityPermissionGranted,
+            object: nil
+        )
     }
 
     @objc private func indicatorWindowDidHide() {
@@ -50,6 +57,11 @@ class ShortcutManager {
     }
 
     @objc private func hotkeySettingsChanged() {
+        setupModifierKeyMonitor()
+    }
+
+    @objc private func accessibilityPermissionGranted() {
+        print("ShortcutManager: Accessibility permission granted, re-setting up monitor")
         setupModifierKeyMonitor()
     }
 

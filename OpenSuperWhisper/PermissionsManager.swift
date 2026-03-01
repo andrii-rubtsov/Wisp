@@ -12,25 +12,20 @@ class PermissionsManager: ObservableObject {
     @Published var isAccessibilityPermissionGranted = false
 
     private var permissionCheckTimer: Timer?
+    private var backgroundAccessibilityTimer: Timer?
     private var windowObservers: [NSObjectProtocol] = []
 
     init() {
         checkMicrophonePermission()
         checkAccessibilityPermission()
 
-        NSWorkspace.shared.notificationCenter.addObserver(
-            self,
-            selector: #selector(accessibilityPermissionChanged),
-            name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
-            object: nil
-        )
-
         setupWindowObservers()
+        startBackgroundAccessibilityPolling()
     }
 
     deinit {
         stopPermissionChecking()
-        NSWorkspace.shared.notificationCenter.removeObserver(self)
+        backgroundAccessibilityTimer?.invalidate()
         for observer in windowObservers {
             NotificationCenter.default.removeObserver(observer)
         }
@@ -68,9 +63,36 @@ class PermissionsManager: ObservableObject {
         }
     }
 
+    /// Polls accessibility permission continuously (even when window not visible)
+    /// so that ShortcutManager can be notified immediately when permission is granted.
+    private func startBackgroundAccessibilityPolling() {
+        guard backgroundAccessibilityTimer == nil else { return }
+        backgroundAccessibilityTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] timer in
+            let granted = AXIsProcessTrusted()
+            guard let self else {
+                timer.invalidate()
+                return
+            }
+            let wasGranted = self.isAccessibilityPermissionGranted
+            DispatchQueue.main.async {
+                self.isAccessibilityPermissionGranted = granted
+            }
+            if granted && !wasGranted {
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: .accessibilityPermissionGranted, object: nil)
+                }
+            }
+            // Once granted, slow down polling
+            if granted {
+                timer.invalidate()
+                self.backgroundAccessibilityTimer = nil
+            }
+        }
+    }
+
     private func startPermissionChecking() {
         guard permissionCheckTimer == nil else { return }
-        permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             self?.checkMicrophonePermission()
             self?.checkAccessibilityPermission()
         }
@@ -96,8 +118,17 @@ class PermissionsManager: ObservableObject {
 
     func checkAccessibilityPermission() {
         let granted = AXIsProcessTrusted()
+        let wasGranted = isAccessibilityPermissionGranted
         DispatchQueue.main.async { [weak self] in
             self?.isAccessibilityPermissionGranted = granted
+        }
+        if granted && !wasGranted {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .accessibilityPermissionGranted, object: nil)
+            }
+            // Stop background polling since permission is now granted
+            backgroundAccessibilityTimer?.invalidate()
+            backgroundAccessibilityTimer = nil
         }
     }
 
@@ -117,10 +148,6 @@ class PermissionsManager: ObservableObject {
         default:
             openSystemPreferences(for: .microphone)
         }
-    }
-
-    @objc private func accessibilityPermissionChanged() {
-        checkAccessibilityPermission()
     }
 
     func openSystemPreferences(for permission: Permission) {

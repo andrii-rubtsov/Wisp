@@ -39,31 +39,52 @@ class IndicatorWindowManager: IndicatorViewDelegate {
             self.window = panel
         }
         
-        // Position window - use the screen containing the point, or main screen as fallback
-        let targetScreen = point.flatMap { FocusUtils.screenContaining(point: $0) } ?? NSScreen.main
+        // Position window
+        let position = AppPreferences.shared.indicatorPosition
+        let targetScreen: NSScreen?
+        if position == .nearCursor {
+            targetScreen = point.flatMap { FocusUtils.screenContaining(point: $0) } ?? NSScreen.main
+        } else {
+            targetScreen = NSScreen.main
+        }
+
         if let window = window, let screen = targetScreen {
             let windowFrame = window.frame
-            let screenFrame = screen.frame
-            
+            let screenFrame = screen.visibleFrame
+            let margin: CGFloat = 40
+
             var x: CGFloat
             var y: CGFloat
-            
-            if let point = point {
-                // Position near cursor
-                x = point.x - windowFrame.width / 2
-                y = point.y + 20 // 20 points above cursor
-            } else {
-                // Default to top center of screen
-                x = screenFrame.midX - windowFrame.width / 2
-                y = screenFrame.maxY - windowFrame.height - 100 // 100 pixels from top
+
+            switch position {
+            case .nearCursor:
+                if let point = point {
+                    x = point.x - windowFrame.width / 2
+                    y = point.y + 20
+                } else {
+                    x = screenFrame.midX - windowFrame.width / 2
+                    y = screenFrame.maxY - windowFrame.height - 100
+                }
+            case .lowerLeft:
+                x = screenFrame.minX + margin
+                y = screenFrame.minY + margin
+            case .lowerRight:
+                x = screenFrame.maxX - windowFrame.width - margin
+                y = screenFrame.minY + margin
+            case .upperLeft:
+                x = screenFrame.minX + margin
+                y = screenFrame.maxY - windowFrame.height - margin
+            case .upperRight:
+                x = screenFrame.maxX - windowFrame.width - margin
+                y = screenFrame.maxY - windowFrame.height - margin
             }
-            
-            // Adjust if out of screen bounds
+
+            // Clamp to screen bounds
             x = max(screenFrame.minX, min(x, screenFrame.maxX - windowFrame.width))
             y = max(screenFrame.minY, min(y, screenFrame.maxY - windowFrame.height))
-            
+
             window.setFrameOrigin(NSPoint(x: x, y: y))
-            
+
             // Set content view
             let hostingView = NSHostingView(rootView: IndicatorWindow(viewModel: newViewModel))
             window.contentView = hostingView

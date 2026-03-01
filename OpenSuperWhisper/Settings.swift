@@ -130,6 +130,12 @@ class SettingsViewModel: ObservableObject {
         }
     }
 
+    @Published var indicatorPosition: IndicatorPosition {
+        didSet {
+            AppPreferences.shared.indicatorPosition = indicatorPosition
+        }
+    }
+
     @Published var shortcutBindings: [ShortcutBinding] {
         didSet {
             AppPreferences.shared.shortcutBindings = shortcutBindings
@@ -154,6 +160,7 @@ class SettingsViewModel: ObservableObject {
         self.playSoundOnRecordStart = prefs.playSoundOnRecordStart
         self.modifierOnlyHotkey = ModifierKey(rawValue: prefs.modifierOnlyHotkey) ?? .none
         self.holdToRecord = prefs.holdToRecord
+        self.indicatorPosition = prefs.indicatorPosition
         self.shortcutBindings = prefs.shortcutBindings
 
         if let savedPath = prefs.selectedWhisperModelPath ?? prefs.selectedModelPath {
@@ -1156,6 +1163,30 @@ struct SettingsView: View {
                                 .labelsHidden()
                                 .help("Play a notification sound when recording begins")
                         }
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.controlBackgroundColor).opacity(0.3))
+                .cornerRadius(12)
+
+                // Recording Indicator Position
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Recording Indicator")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+
+                    HStack {
+                        Text("Position")
+                            .font(.subheadline)
+                        Spacer()
+                        Picker("", selection: $viewModel.indicatorPosition) {
+                            ForEach(IndicatorPosition.allCases) { pos in
+                                Text(pos.displayName).tag(pos)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: 160)
                     }
                 }
                 .padding()

@@ -104,4 +104,32 @@ final class AppPreferences {
     
     @UserDefault(key: "holdToRecord", defaultValue: true)
     var holdToRecord: Bool
+
+    @UserDefault(key: "indicatorPosition", defaultValue: IndicatorPosition.nearCursor.rawValue)
+    var indicatorPositionRaw: String
+
+    var indicatorPosition: IndicatorPosition {
+        get { IndicatorPosition(rawValue: indicatorPositionRaw) ?? .nearCursor }
+        set { indicatorPositionRaw = newValue.rawValue }
+    }
+}
+
+enum IndicatorPosition: String, CaseIterable, Identifiable {
+    case nearCursor = "nearCursor"
+    case lowerLeft = "lowerLeft"
+    case lowerRight = "lowerRight"
+    case upperLeft = "upperLeft"
+    case upperRight = "upperRight"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .nearCursor: return "Near Cursor"
+        case .lowerLeft: return "Lower Left"
+        case .lowerRight: return "Lower Right"
+        case .upperLeft: return "Upper Left"
+        case .upperRight: return "Upper Right"
+        }
+    }
 }

@@ -100,11 +100,29 @@ class ModifierKeyMonitor {
     private var runLoopSource: CFRunLoopSource?
     private var monitoredKeys: Set<ModifierKey> = []
     private var pressedKeys: Set<ModifierKey> = []
+    private var pendingKeys: Set<ModifierKey>?
 
     var onKeyDown: ((ModifierKey) -> Void)?
     var onKeyUp: ((ModifierKey) -> Void)?
 
-    private init() {}
+    var isRunning: Bool { eventTap != nil }
+
+    private init() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(accessibilityGranted),
+            name: .accessibilityPermissionGranted,
+            object: nil
+        )
+    }
+
+    @objc private func accessibilityGranted() {
+        // Retry starting monitor if we have pending keys that failed earlier
+        if let keys = pendingKeys {
+            print("ModifierKeyMonitor: Accessibility granted, retrying tap creation")
+            start(modifierKeys: keys)
+        }
+    }
 
     /// Start monitoring a single modifier key (legacy convenience).
     func start(modifierKey: ModifierKey) {
@@ -152,10 +170,12 @@ class ModifierKeyMonitor {
             },
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
-            print("ModifierKeyMonitor: Failed to create event tap. Check accessibility permissions.")
+            print("ModifierKeyMonitor: Failed to create event tap. Waiting for accessibility permission...")
+            pendingKeys = keys
             return
         }
 
+        pendingKeys = nil
         eventTap = tap
         runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
 
