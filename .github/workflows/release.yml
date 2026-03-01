@@ -5,6 +5,9 @@ on:
     branches: [master]
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-latest
@@ -14,7 +17,6 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 
       - name: Install dependencies
         run: brew install cmake libomp
