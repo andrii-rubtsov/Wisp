@@ -23,7 +23,7 @@ class IndicatorWindowManager: IndicatorViewDelegate {
         if window == nil {
             // Create window if it doesn't exist - using NSPanel for full-screen compatibility
             let panel = NSPanel(
-                contentRect: NSRect(x: 0, y: 0, width: 200, height: 60),
+                contentRect: NSRect(x: 0, y: 0, width: 230, height: 60),
                 styleMask: [.borderless, .nonactivatingPanel],
                 backing: .buffered,
                 defer: false
@@ -51,7 +51,7 @@ class IndicatorWindowManager: IndicatorViewDelegate {
         if let window = window, let screen = targetScreen {
             let windowFrame = window.frame
             let screenFrame = screen.visibleFrame
-            let margin: CGFloat = 40
+            let margin: CGFloat = 20
 
             var x: CGFloat
             var y: CGFloat

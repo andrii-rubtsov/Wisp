@@ -221,7 +221,7 @@ class IndicatorViewModel: ObservableObject {
 
 struct RecordingIndicator: View {
     let isBlinking: Bool
-    
+
     var body: some View {
         Circle()
             .fill(
@@ -234,90 +234,75 @@ struct RecordingIndicator: View {
                     endPoint: .bottomTrailing
                 )
             )
-            .frame(width: 8, height: 8)
-            .shadow(color: .red.opacity(0.5), radius: 4)
-            .opacity(isBlinking ? 0.3 : 1.0)
+            .frame(width: 12, height: 12)
+            .shadow(color: .red.opacity(0.6), radius: 6)
+            .opacity(isBlinking ? 0.2 : 1.0)
             .animation(.easeInOut(duration: 0.4), value: isBlinking)
     }
 }
 
 struct IndicatorWindow: View {
     @ObservedObject var viewModel: IndicatorViewModel
-    @Environment(\.colorScheme) private var colorScheme
-    
-    private var backgroundColor: Color {
-        colorScheme == .dark
-            ? Color.black.opacity(0.24)
-            : Color.white.opacity(0.24)
-    }
-    
-    var body: some View {
 
-        let rect = RoundedRectangle(cornerRadius: 24)
-        
-        VStack(spacing: 12) {
+    private let textColor = Color.green
+    private let borderColor = Color.purple
+
+    var body: some View {
+        let rect = RoundedRectangle(cornerRadius: 16)
+
+        VStack(spacing: 0) {
             switch viewModel.state {
             case .connecting:
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
                     ProgressView()
-                        .scaleEffect(0.7)
-                        .frame(width: 24)
-                    
+                        .scaleEffect(0.8)
                     Text("Connecting...")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(textColor)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                
+
             case .recording:
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
                     RecordingIndicator(isBlinking: viewModel.isBlinking)
-                        .frame(width: 24)
-                    
                     Text("Recording...")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(textColor)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                
+
             case .decoding:
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
                     ProgressView()
-                        .scaleEffect(0.7)
-                        .frame(width: 24)
-                    
+                        .scaleEffect(0.8)
                     Text("Transcribing...")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(textColor)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                
+
             case .busy:
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
                     Image(systemName: "hourglass")
+                        .font(.system(size: 14))
                         .foregroundColor(.orange)
-                        .frame(width: 24)
-                    
                     Text("Processing...")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.orange)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                
+
             case .idle:
                 EmptyView()
             }
         }
-        .padding(.horizontal, 24)
-        .frame(height: 36)
-        .background {
+        .frame(width: 220, height: 48)
+        .background(
             rect
-                .fill(backgroundColor)
-                .background {
-                    rect
-                        .fill(Material.thinMaterial)
-                }
-                .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 4)
-        }
+                .fill(Color.black.opacity(0.88))
+                .shadow(color: .black.opacity(0.3), radius: 12, x: 0, y: 4)
+        )
+        .overlay(
+            rect
+                .stroke(borderColor.opacity(0.7), lineWidth: 1.5)
+        )
         .clipShape(rect)
-        .frame(width: 200)
         .scaleEffect(viewModel.isVisible ? 1 : 0.5)
         .offset(y: viewModel.isVisible ? 0 : 20)
         .opacity(viewModel.isVisible ? 1 : 0)
