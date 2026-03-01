@@ -566,7 +566,7 @@ struct SettingsView: View {
                 
                 Spacer()
                 
-                Link(destination: URL(string: "https://github.com/andrii-rubtsov/OpenSuperWhisper")!) {
+                Link(destination: URL(string: "https://github.com/andrii-rubtsov/Wisp")!) {
                     HStack(spacing: 4) {
                         Image(systemName: "star")
                             .font(.system(size: 10))

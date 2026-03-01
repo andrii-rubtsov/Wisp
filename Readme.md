@@ -30,7 +30,7 @@ brew tap andrii-rubtsov/tap
 brew install --cask opensuperwhisper
 ```
 
-Or download the DMG from the [Releases page](https://github.com/andrii-rubtsov/OpenSuperWhisper/releases).
+Or download the DMG from the [Releases page](https://github.com/andrii-rubtsov/Wisp/releases).
 
 ## Requirements
 
@@ -40,7 +40,7 @@ Or download the DMG from the [Releases page](https://github.com/andrii-rubtsov/O
 ## Building locally
 
 ```shell
-git clone git@github.com:andrii-rubtsov/OpenSuperWhisper.git
+git clone git@github.com:andrii-rubtsov/Wisp.git
 cd OpenSuperWhisper
 git submodule update --init --recursive
 brew install cmake libomp rust ruby
