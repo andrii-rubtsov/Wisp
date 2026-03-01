@@ -129,7 +129,14 @@ class SettingsViewModel: ObservableObject {
             AppPreferences.shared.holdToRecord = holdToRecord
         }
     }
-    
+
+    @Published var shortcutBindings: [ShortcutBinding] {
+        didSet {
+            AppPreferences.shared.shortcutBindings = shortcutBindings
+            NotificationCenter.default.post(name: .hotkeySettingsChanged, object: nil)
+        }
+    }
+
     init() {
         let prefs = AppPreferences.shared
         self.selectedEngine = prefs.selectedEngine
@@ -147,13 +154,50 @@ class SettingsViewModel: ObservableObject {
         self.playSoundOnRecordStart = prefs.playSoundOnRecordStart
         self.modifierOnlyHotkey = ModifierKey(rawValue: prefs.modifierOnlyHotkey) ?? .none
         self.holdToRecord = prefs.holdToRecord
-        
+        self.shortcutBindings = prefs.shortcutBindings
+
         if let savedPath = prefs.selectedWhisperModelPath ?? prefs.selectedModelPath {
             self.selectedModelURL = URL(fileURLWithPath: savedPath)
         }
         loadAvailableModels()
         initializeDownloadableModels()
         initializeFluidAudioModels()
+    }
+
+    func addShortcutBinding() {
+        let engine = selectedEngine
+        let modelId: String
+        let modelName: String
+        if engine == "fluidaudio" {
+            modelId = fluidAudioModelVersion
+            modelName = modelId == "v2" ? "Parakeet v2" : "Parakeet v3"
+        } else {
+            let path = AppPreferences.shared.selectedWhisperModelPath ?? ""
+            modelId = (path as NSString).lastPathComponent
+            modelName = downloadableModels.first(where: {
+                $0.url.lastPathComponent == modelId
+            })?.name ?? modelId
+        }
+        // Pick the first unused modifier key
+        let usedKeys = Set(shortcutBindings.map { $0.modifierKey })
+        let available = ModifierKey.allCases.filter { $0 != .none && !usedKeys.contains($0) }
+        let key = available.first ?? .leftCommand
+        shortcutBindings.append(ShortcutBinding(modifierKey: key, engine: engine, modelIdentifier: modelId, modelDisplayName: modelName))
+    }
+
+    func removeShortcutBinding(id: UUID) {
+        shortcutBindings.removeAll { $0.id == id }
+    }
+
+    /// Returns available model choices for a given engine.
+    func availableModelChoices(for engine: String) -> [(id: String, name: String)] {
+        if engine == "fluidaudio" {
+            return SettingsFluidAudioModels.availableModels.map { (id: $0.version, name: $0.name) }
+        } else {
+            return SettingsDownloadableModels.availableModels.map {
+                (id: $0.url.lastPathComponent, name: $0.name)
+            }
+        }
     }
     
     func initializeFluidAudioModels() {
@@ -999,58 +1043,64 @@ struct SettingsView: View {
         }
     }
     
-    private var useModifierKey: Bool {
-        viewModel.modifierOnlyHotkey != .none
+    private var hasBindings: Bool {
+        !viewModel.shortcutBindings.isEmpty
     }
-    
+
+    private var useModifierKey: Bool {
+        hasBindings || viewModel.modifierOnlyHotkey != .none
+    }
+
     private var shortcutSettings: some View {
         Form {
             VStack(spacing: 20) {
-                // Recording Trigger
+                // Recording Shortcuts
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("Recording Trigger")
+                    Text("Recording Shortcuts")
                         .font(.headline)
                         .foregroundColor(.primary)
-                    
+
                     VStack(alignment: .leading, spacing: 16) {
                         Picker("", selection: Binding(
-                            get: { useModifierKey },
-                            set: { newValue in
-                                if !newValue {
+                            get: { hasBindings },
+                            set: { useBindings in
+                                if useBindings && viewModel.shortcutBindings.isEmpty {
+                                    viewModel.addShortcutBinding()
+                                } else if !useBindings {
+                                    viewModel.shortcutBindings = []
                                     viewModel.modifierOnlyHotkey = .none
-                                } else if viewModel.modifierOnlyHotkey == .none {
-                                    viewModel.modifierOnlyHotkey = .leftCommand
                                 }
                             }
                         )) {
                             Text("Key Combination").tag(false)
-                            Text("Single Modifier Key").tag(true)
+                            Text("Per-Model Shortcuts").tag(true)
                         }
                         .pickerStyle(.segmented)
-                        
-                        if useModifierKey {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text("Modifier Key")
-                                        .font(.subheadline)
-                                    Spacer()
-                                    Picker("", selection: $viewModel.modifierOnlyHotkey) {
-                                        ForEach(ModifierKey.allCases.filter { $0 != .none }) { key in
-                                            Text(key.displayName).tag(key)
-                                        }
-                                    }
-                                    .pickerStyle(.menu)
-                                    .frame(width: 200)
+
+                        if hasBindings {
+                            VStack(spacing: 8) {
+                                ForEach(Array(viewModel.shortcutBindings.enumerated()), id: \.element.id) { index, binding in
+                                    ShortcutBindingRow(
+                                        binding: Binding(
+                                            get: { viewModel.shortcutBindings[index] },
+                                            set: { viewModel.shortcutBindings[index] = $0 }
+                                        ),
+                                        modelChoices: viewModel.availableModelChoices(for: binding.engine),
+                                        onDelete: { viewModel.removeShortcutBinding(id: binding.id) }
+                                    )
                                 }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 10)
-                                .background(Color(.textBackgroundColor).opacity(0.5))
-                                .cornerRadius(8)
-                                
-                                Text("One-tap to toggle recording")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+
+                                Button(action: { viewModel.addShortcutBinding() }) {
+                                    Label("Add Shortcut", systemImage: "plus")
+                                        .font(.subheadline)
+                                }
+                                .buttonStyle(.borderless)
+                                .padding(.top, 4)
                             }
+
+                            Text("Each shortcut triggers recording with its assigned engine and model")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         } else {
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
@@ -1064,7 +1114,7 @@ struct SettingsView: View {
                                 .padding(.vertical, 10)
                                 .background(Color(.textBackgroundColor).opacity(0.5))
                                 .cornerRadius(8)
-                                
+
                                 if isRecordingNewShortcut {
                                     Text("Press your new shortcut combination...")
                                         .foregroundColor(.secondary)
@@ -1078,13 +1128,13 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(.controlBackgroundColor).opacity(0.3))
                 .cornerRadius(12)
-                
+
                 // Recording Behavior
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Recording Behavior")
                         .font(.headline)
                         .foregroundColor(.primary)
-                    
+
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
@@ -1099,7 +1149,7 @@ struct SettingsView: View {
                                 .toggleStyle(SwitchToggleStyle(tint: Color.accentColor))
                                 .labelsHidden()
                         }
-                        
+
                         HStack {
                             Text("Play sound when recording starts")
                                 .font(.subheadline)
@@ -1118,6 +1168,65 @@ struct SettingsView: View {
             }
             .padding()
         }
+    }
+}
+
+/// A single row in the shortcut bindings list.
+struct ShortcutBindingRow: View {
+    @Binding var binding: ShortcutBinding
+    let modelChoices: [(id: String, name: String)]
+    let onDelete: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Picker("", selection: $binding.modifierKey) {
+                ForEach(ModifierKey.allCases.filter { $0 != .none }) { key in
+                    Text(key.displayName).tag(key)
+                }
+            }
+            .pickerStyle(.menu)
+            .frame(width: 160)
+
+            Picker("", selection: $binding.engine) {
+                Text("Whisper").tag("whisper")
+                Text("Parakeet").tag("fluidaudio")
+            }
+            .pickerStyle(.menu)
+            .frame(width: 90)
+            .onChange(of: binding.engine) { _, newEngine in
+                // Reset model to first available when engine changes
+                let choices = newEngine == "fluidaudio"
+                    ? SettingsFluidAudioModels.availableModels.map { (id: $0.version, name: $0.name) }
+                    : SettingsDownloadableModels.availableModels.map { (id: $0.url.lastPathComponent, name: $0.name) }
+                if let first = choices.first {
+                    binding.modelIdentifier = first.id
+                    binding.modelDisplayName = first.name
+                }
+            }
+
+            Picker("", selection: $binding.modelIdentifier) {
+                ForEach(modelChoices, id: \.id) { choice in
+                    Text(choice.name).tag(choice.id)
+                }
+            }
+            .pickerStyle(.menu)
+            .frame(minWidth: 80)
+            .onChange(of: binding.modelIdentifier) { _, newId in
+                if let match = modelChoices.first(where: { $0.id == newId }) {
+                    binding.modelDisplayName = match.name
+                }
+            }
+
+            Button(action: onDelete) {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(.borderless)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color(.textBackgroundColor).opacity(0.5))
+        .cornerRadius(8)
     }
 }
 

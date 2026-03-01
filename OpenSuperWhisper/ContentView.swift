@@ -302,6 +302,10 @@ struct ContentView: View {
     @State private var searchTask: Task<Void, Never>? = nil
 
     private var currentShortcutDescription: String {
+        let bindings = AppPreferences.shared.shortcutBindings
+        if let first = bindings.first {
+            return first.modifierKey.shortSymbol
+        }
         let modifierKey = ModifierKey(rawValue: AppPreferences.shared.modifierOnlyHotkey) ?? .none
         if modifierKey != .none {
             return modifierKey.shortSymbol

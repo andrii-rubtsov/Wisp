@@ -19,20 +19,23 @@ class ShortcutManager {
     private let holdThreshold: TimeInterval = 0.3
     private var holdMode = false
     private var useModifierOnlyHotkey = false
+    private var bindings: [ShortcutBinding] = []
 
     private init() {
         print("ShortcutManager init")
-        
+
+        AppPreferences.shared.migrateToShortcutBindings()
+
         setupKeyboardShortcuts()
         setupModifierKeyMonitor()
-        
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(hotkeySettingsChanged),
             name: .hotkeySettingsChanged,
             object: nil
         )
-        
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(indicatorWindowDidHide),
@@ -40,16 +43,16 @@ class ShortcutManager {
             object: nil
         )
     }
-    
+
     @objc private func indicatorWindowDidHide() {
         activeVm = nil
         holdMode = false
     }
-    
+
     @objc private func hotkeySettingsChanged() {
         setupModifierKeyMonitor()
     }
-    
+
     private func setupKeyboardShortcuts() {
         KeyboardShortcuts.onKeyDown(for: .toggleRecord) { [weak self] in
             self?.handleKeyDown()
@@ -69,39 +72,70 @@ class ShortcutManager {
         }
         KeyboardShortcuts.disable(.escape)
     }
-    
+
     private func setupModifierKeyMonitor() {
-        let modifierKeyString = AppPreferences.shared.modifierOnlyHotkey
-        let modifierKey = ModifierKey(rawValue: modifierKeyString) ?? .none
-        
-        if modifierKey != .none {
+        bindings = AppPreferences.shared.shortcutBindings
+
+        if !bindings.isEmpty {
             useModifierOnlyHotkey = true
             KeyboardShortcuts.disable(.toggleRecord)
-            
-            ModifierKeyMonitor.shared.onKeyDown = { [weak self] in
+
+            let modifierKeys = Set(bindings.map { $0.modifierKey })
+
+            ModifierKeyMonitor.shared.onKeyDown = { [weak self] key in
+                self?.applyBinding(for: key)
                 self?.handleKeyDown()
             }
-            
-            ModifierKeyMonitor.shared.onKeyUp = { [weak self] in
+
+            ModifierKeyMonitor.shared.onKeyUp = { [weak self] _ in
                 self?.handleKeyUp()
             }
-            
-            ModifierKeyMonitor.shared.start(modifierKey: modifierKey)
-            print("ShortcutManager: Using modifier-only hotkey: \(modifierKey.displayName)")
+
+            ModifierKeyMonitor.shared.start(modifierKeys: modifierKeys)
+            let names = modifierKeys.map { $0.displayName }.joined(separator: ", ")
+            print("ShortcutManager: Using modifier-only hotkeys: \(names)")
         } else {
-            useModifierOnlyHotkey = false
-            ModifierKeyMonitor.shared.stop()
-            KeyboardShortcuts.enable(.toggleRecord)
-            print("ShortcutManager: Using regular keyboard shortcut")
+            // Legacy: check single modifier key preference
+            let modifierKeyString = AppPreferences.shared.modifierOnlyHotkey
+            let modifierKey = ModifierKey(rawValue: modifierKeyString) ?? .none
+
+            if modifierKey != .none {
+                useModifierOnlyHotkey = true
+                KeyboardShortcuts.disable(.toggleRecord)
+
+                ModifierKeyMonitor.shared.onKeyDown = { [weak self] _ in
+                    self?.handleKeyDown()
+                }
+
+                ModifierKeyMonitor.shared.onKeyUp = { [weak self] _ in
+                    self?.handleKeyUp()
+                }
+
+                ModifierKeyMonitor.shared.start(modifierKey: modifierKey)
+                print("ShortcutManager: Using legacy modifier-only hotkey: \(modifierKey.displayName)")
+            } else {
+                useModifierOnlyHotkey = false
+                ModifierKeyMonitor.shared.stop()
+                KeyboardShortcuts.enable(.toggleRecord)
+                print("ShortcutManager: Using regular keyboard shortcut")
+            }
         }
     }
-    
+
+    private func applyBinding(for key: ModifierKey) {
+        guard let binding = bindings.first(where: { $0.modifierKey == key }) else { return }
+        binding.apply()
+        Task { @MainActor in
+            TranscriptionService.shared.reloadEngine()
+        }
+    }
+
     private func handleKeyDown() {
         holdWorkItem?.cancel()
         holdMode = false
-        
+
         let holdToRecordEnabled = AppPreferences.shared.holdToRecord
-        
+
         Task { @MainActor in
             if self.activeVm == nil {
                 let cursorPosition = FocusUtils.getCurrentCursorPosition()
@@ -119,7 +153,7 @@ class ShortcutManager {
                 self.activeVm = nil
             }
         }
-        
+
         if holdToRecordEnabled {
             let workItem = DispatchWorkItem { [weak self] in
                 self?.holdMode = true
@@ -128,13 +162,13 @@ class ShortcutManager {
             DispatchQueue.main.asyncAfter(deadline: .now() + holdThreshold, execute: workItem)
         }
     }
-    
+
     private func handleKeyUp() {
         holdWorkItem?.cancel()
         holdWorkItem = nil
-        
+
         let holdToRecordEnabled = AppPreferences.shared.holdToRecord
-        
+
         Task { @MainActor in
             if holdToRecordEnabled && self.holdMode {
                 IndicatorWindowManager.shared.stopRecording()

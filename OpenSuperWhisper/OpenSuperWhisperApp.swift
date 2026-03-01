@@ -77,6 +77,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     private var languageSubmenu: NSMenu?
     private var microphoneService = MicrophoneService.shared
     private var microphoneObserver: AnyCancellable?
+    private var recordingObserver: AnyCancellable?
+    private var recordingTimer: Timer?
+    private var recordingFrameIndex = 0
+    private lazy var iconFrames = StatusBarIcon.createAnimationFrames()
+    private lazy var staticIcon = StatusBarIcon.create()
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         
@@ -92,6 +97,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         
         OpenSuperWhisperApp.startTranscriptionQueue()
         observeMicrophoneChanges()
+        observeRecordingState()
     }
 
     func application(_ sender: NSApplication, openFile filename: String) -> Bool {
@@ -143,18 +149,41 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 self?.updateStatusBarMenu()
             }
     }
+
+    private func observeRecordingState() {
+        recordingObserver = AudioRecorder.shared.$isRecording
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isRecording in
+                if isRecording {
+                    self?.startRecordingAnimation()
+                } else {
+                    self?.stopRecordingAnimation()
+                }
+            }
+    }
+
+    private func startRecordingAnimation() {
+        recordingFrameIndex = 0
+        recordingTimer?.invalidate()
+        recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { [weak self] _ in
+            guard let self, let button = self.statusItem?.button else { return }
+            button.image = self.iconFrames[self.recordingFrameIndex]
+            self.recordingFrameIndex = (self.recordingFrameIndex + 1) % self.iconFrames.count
+        }
+        recordingTimer?.fire()
+    }
+
+    private func stopRecordingAnimation() {
+        recordingTimer?.invalidate()
+        recordingTimer = nil
+        statusItem?.button?.image = staticIcon
+    }
     
     private func setupStatusBarItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         
         if let button = statusItem?.button {
-            if let iconImage = NSImage(named: "tray_icon") {
-                iconImage.size = NSSize(width: 48, height: 48)
-                iconImage.isTemplate = true
-                button.image = iconImage
-            } else {
-                button.image = NSImage(systemSymbolName: "waveform", accessibilityDescription: "Wisp")
-            }
+            button.image = staticIcon
             
             button.action = #selector(statusBarButtonClicked(_:))
             button.target = self

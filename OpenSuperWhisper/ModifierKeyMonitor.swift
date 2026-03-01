@@ -95,30 +95,41 @@ enum ModifierKey: String, CaseIterable, Identifiable, Codable {
 
 class ModifierKeyMonitor {
     static let shared = ModifierKeyMonitor()
-    
+
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    private var selectedModifierKey: ModifierKey = .none
-    private var isModifierPressed = false
-    
-    var onKeyDown: (() -> Void)?
-    var onKeyUp: (() -> Void)?
-    
+    private var monitoredKeys: Set<ModifierKey> = []
+    private var pressedKeys: Set<ModifierKey> = []
+
+    var onKeyDown: ((ModifierKey) -> Void)?
+    var onKeyUp: ((ModifierKey) -> Void)?
+
     private init() {}
-    
+
+    /// Start monitoring a single modifier key (legacy convenience).
     func start(modifierKey: ModifierKey) {
         guard modifierKey != .none else {
             stop()
             return
         }
-        
+        start(modifierKeys: [modifierKey])
+    }
+
+    /// Start monitoring multiple modifier keys simultaneously.
+    func start(modifierKeys: Set<ModifierKey>) {
+        let keys = modifierKeys.filter { $0 != .none }
+        guard !keys.isEmpty else {
+            stop()
+            return
+        }
+
         stop()
-        
-        selectedModifierKey = modifierKey
-        isModifierPressed = false
-        
+
+        monitoredKeys = keys
+        pressedKeys = []
+
         let eventMask = CGEventMask(1 << CGEventType.flagsChanged.rawValue)
-        
+
         guard let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
             place: .headInsertEventTap,
@@ -128,14 +139,14 @@ class ModifierKeyMonitor {
                 guard let refcon = refcon else {
                     return Unmanaged.passUnretained(event)
                 }
-                
+
                 let monitor = Unmanaged<ModifierKeyMonitor>.fromOpaque(refcon).takeUnretainedValue()
-                
+
                 if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
                     monitor.reenableTap()
                     return Unmanaged.passUnretained(event)
                 }
-                
+
                 monitor.handleFlagsChanged(event: event)
                 return Unmanaged.passUnretained(event)
             },
@@ -144,17 +155,18 @@ class ModifierKeyMonitor {
             print("ModifierKeyMonitor: Failed to create event tap. Check accessibility permissions.")
             return
         }
-        
+
         eventTap = tap
         runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-        
+
         if let source = runLoopSource {
             CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
             CGEvent.tapEnable(tap: tap, enable: true)
-            print("ModifierKeyMonitor: Started monitoring for \(modifierKey.displayName)")
+            let names = keys.map { $0.displayName }.joined(separator: ", ")
+            print("ModifierKeyMonitor: Started monitoring for \(names)")
         }
     }
-    
+
     func stop() {
         if let tap = eventTap {
             CGEvent.tapEnable(tap: tap, enable: false)
@@ -164,39 +176,38 @@ class ModifierKeyMonitor {
         }
         eventTap = nil
         runLoopSource = nil
-        isModifierPressed = false
+        pressedKeys = []
         print("ModifierKeyMonitor: Stopped")
     }
-    
+
     fileprivate func reenableTap() {
         if let tap = eventTap {
             CGEvent.tapEnable(tap: tap, enable: true)
             print("ModifierKeyMonitor: Re-enabled tap after timeout")
         }
     }
-    
+
     private func handleFlagsChanged(event: CGEvent) {
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
-        
-        guard keyCode == selectedModifierKey.keyCode else { return }
-        
-        let cgFlag = selectedModifierKey.cgEventFlag
-        let isPressed = flags.contains(cgFlag)
-        
-        if isPressed && !isModifierPressed {
-            isModifierPressed = true
+
+        guard let matchedKey = monitoredKeys.first(where: { $0.keyCode == keyCode }) else { return }
+
+        let isPressed = flags.contains(matchedKey.cgEventFlag)
+
+        if isPressed && !pressedKeys.contains(matchedKey) {
+            pressedKeys.insert(matchedKey)
             DispatchQueue.main.async {
-                self.onKeyDown?()
+                self.onKeyDown?(matchedKey)
             }
-        } else if !isPressed && isModifierPressed {
-            isModifierPressed = false
+        } else if !isPressed && pressedKeys.contains(matchedKey) {
+            pressedKeys.remove(matchedKey)
             DispatchQueue.main.async {
-                self.onKeyUp?()
+                self.onKeyUp?(matchedKey)
             }
         }
     }
-    
+
     deinit {
         stop()
     }
