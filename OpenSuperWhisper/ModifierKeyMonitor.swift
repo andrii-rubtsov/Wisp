@@ -100,29 +100,12 @@ class ModifierKeyMonitor {
     private var runLoopSource: CFRunLoopSource?
     private var monitoredKeys: Set<ModifierKey> = []
     private var pressedKeys: Set<ModifierKey> = []
-    private var pendingKeys: Set<ModifierKey>?
-
     var onKeyDown: ((ModifierKey) -> Void)?
     var onKeyUp: ((ModifierKey) -> Void)?
 
     var isRunning: Bool { eventTap != nil }
 
-    private init() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(accessibilityGranted),
-            name: .accessibilityPermissionGranted,
-            object: nil
-        )
-    }
-
-    @objc private func accessibilityGranted() {
-        // Retry starting monitor if we have pending keys that failed earlier
-        if let keys = pendingKeys {
-            print("ModifierKeyMonitor: Accessibility granted, retrying tap creation")
-            start(modifierKeys: keys)
-        }
-    }
+    private init() {}
 
     /// Start monitoring a single modifier key (legacy convenience).
     func start(modifierKey: ModifierKey) {
@@ -170,17 +153,15 @@ class ModifierKeyMonitor {
             },
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
-            print("ModifierKeyMonitor: Failed to create event tap. Waiting for accessibility permission...")
-            pendingKeys = keys
+            print("ModifierKeyMonitor: Failed to create event tap. Accessibility permission not granted.")
             return
         }
 
-        pendingKeys = nil
         eventTap = tap
         runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
 
         if let source = runLoopSource {
-            CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
+            CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
             CGEvent.tapEnable(tap: tap, enable: true)
             let names = keys.map { $0.displayName }.joined(separator: ", ")
             print("ModifierKeyMonitor: Started monitoring for \(names)")
@@ -191,7 +172,7 @@ class ModifierKeyMonitor {
         if let tap = eventTap {
             CGEvent.tapEnable(tap: tap, enable: false)
             if let source = runLoopSource {
-                CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, .commonModes)
+                CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes)
             }
         }
         eventTap = nil

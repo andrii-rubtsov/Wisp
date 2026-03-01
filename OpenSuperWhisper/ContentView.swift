@@ -293,7 +293,7 @@ class ContentViewModel: ObservableObject {
 
 struct ContentView: View {
     @StateObject private var viewModel = ContentViewModel()
-    @StateObject private var permissionsManager = PermissionsManager()
+    @ObservedObject private var permissionsManager = PermissionsManager.shared
     @Environment(\.colorScheme) private var colorScheme
     @State private var isSettingsPresented = false
     @State private var searchText = ""

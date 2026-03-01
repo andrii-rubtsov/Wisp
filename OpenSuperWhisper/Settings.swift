@@ -1225,14 +1225,13 @@ struct ShortcutBindingRow: View {
 
             // Initial prompt (whisper only)
             if binding.engine == "whisper" {
-                HStack(spacing: 6) {
-                    Text("Prompt:")
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Initial Prompt:")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                        .frame(width: 45, alignment: .leading)
-                    TextField("Initial prompt for Whisper...", text: $binding.initialPrompt)
-                        .textFieldStyle(.plain)
+                    TextEditor(text: $binding.initialPrompt)
                         .font(.caption)
+                        .frame(height: 50)
                         .padding(4)
                         .background(Color(.textBackgroundColor))
                         .cornerRadius(4)

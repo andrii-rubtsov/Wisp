@@ -8,6 +8,8 @@ enum Permission {
 }
 
 class PermissionsManager: ObservableObject {
+    static let shared = PermissionsManager()
+
     @Published var isMicrophonePermissionGranted = false
     @Published var isAccessibilityPermissionGranted = false
 

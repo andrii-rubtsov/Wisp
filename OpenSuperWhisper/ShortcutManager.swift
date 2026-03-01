@@ -17,6 +17,7 @@ class ShortcutManager {
     private var holdWorkItem: DispatchWorkItem?
     private let holdThreshold: TimeInterval = 0.3
     private var holdMode = false
+    private var activeModifierKey: ModifierKey?
     private var bindings: [ShortcutBinding] = []
 
     private init() {
@@ -79,12 +80,14 @@ class ShortcutManager {
             let modifierKeys = Set(modifierBindings.map { $0.modifierKey })
 
             ModifierKeyMonitor.shared.onKeyDown = { [weak self] key in
+                self?.activeModifierKey = key
                 self?.applyBinding(forModifierKey: key)
                 self?.handleKeyDown()
             }
 
             ModifierKeyMonitor.shared.onKeyUp = { [weak self] _ in
                 self?.handleKeyUp()
+                self?.activeModifierKey = nil
             }
 
             ModifierKeyMonitor.shared.start(modifierKeys: modifierKeys)
@@ -146,7 +149,9 @@ class ShortcutManager {
         holdWorkItem?.cancel()
         holdMode = false
 
+        // Disable hold-to-record for Command/Option keys (too easy to hold accidentally)
         let holdToRecordEnabled = AppPreferences.shared.holdToRecord
+            && !(activeModifierKey?.isCommandOrOption ?? false)
 
         Task { @MainActor in
             if self.activeVm == nil {
