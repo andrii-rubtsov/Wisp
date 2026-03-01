@@ -161,20 +161,6 @@ class SettingsViewModel: ObservableObject {
     func addShortcutBinding() {
         guard shortcutBindings.count < ShortcutBinding.maxBindings else { return }
 
-        let engine = selectedEngine
-        let modelId: String
-        let modelName: String
-        if engine == "fluidaudio" {
-            modelId = fluidAudioModelVersion
-            modelName = modelId == "v2" ? "Parakeet v2" : "Parakeet v3"
-        } else {
-            let path = AppPreferences.shared.selectedWhisperModelPath ?? ""
-            modelId = (path as NSString).lastPathComponent
-            modelName = downloadableModels.first(where: {
-                $0.url.lastPathComponent == modelId
-            })?.name ?? modelId
-        }
-
         // Pick the first unused modifier key for single-modifier type
         let usedKeys = Set(shortcutBindings.filter { $0.triggerType == .singleModifier }.map { $0.modifierKey })
         let available = ModifierKey.allCases.filter { $0 != .none && !usedKeys.contains($0) }
@@ -186,9 +172,9 @@ class SettingsViewModel: ObservableObject {
             triggerType: .singleModifier,
             modifierKey: key,
             keyComboSlot: slot,
-            engine: engine,
-            modelIdentifier: modelId,
-            modelDisplayName: modelName
+            engine: "fluidaudio",
+            modelIdentifier: "v3",
+            modelDisplayName: "Parakeet v3"
         ))
     }
 
@@ -568,24 +554,30 @@ struct SettingsView: View {
         TabView(selection: $selectedTab) {
             shortcutSettings
                 .tabItem {
-                    Label("Shortcuts", systemImage: "command")
+                    Label("Shortcuts and models", systemImage: "command")
                 }
                 .tag(0)
+
+            modelDownloadsTab
+                .tabItem {
+                    Label("Downloads", systemImage: "arrow.down.circle")
+                }
+                .tag(1)
 
             transcriptionSettings
                 .tabItem {
                     Label("Transcription", systemImage: "text.bubble")
                 }
-                .tag(1)
+                .tag(2)
 
             advancedSettings
                 .tabItem {
                     Label("Advanced", systemImage: "gear")
                 }
-                .tag(2)
+                .tag(3)
         }
         .padding()
-        .frame(width: 550)
+        .frame(minWidth: 650, maxWidth: .infinity)
         .background(Color(.windowBackgroundColor))
         .safeAreaInset(edge: .bottom) {
             HStack {
@@ -621,11 +613,11 @@ struct SettingsView: View {
     // MARK: - Shortcuts Tab
 
     private var shortcutSettings: some View {
-        Form {
+        ScrollView {
             VStack(spacing: 20) {
-                // Recording Shortcuts
+                // Shortcuts for models
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("Recording Shortcuts")
+                    Text("Shortcuts for models")
                         .font(.headline)
                         .foregroundColor(.primary)
 
@@ -636,13 +628,14 @@ struct SettingsView: View {
                                 availableModifierKeys: viewModel.availableModifierKeys(for: binding.id),
                                 modelChoices: viewModel.availableModelChoices(for: binding.engine),
                                 canDelete: viewModel.shortcutBindings.count > 1,
-                                onDelete: { viewModel.removeShortcutBinding(id: binding.id) }
+                                onDelete: { viewModel.removeShortcutBinding(id: binding.id) },
+                                viewModel: viewModel
                             )
                         }
 
                         if viewModel.shortcutBindings.count < ShortcutBinding.maxBindings {
                             Button(action: { viewModel.addShortcutBinding() }) {
-                                Label("Add Shortcut", systemImage: "plus")
+                                Label("Add shortcut for model", systemImage: "plus")
                                     .font(.subheadline)
                             }
                             .buttonStyle(.borderless)
@@ -658,9 +651,6 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(.controlBackgroundColor).opacity(0.3))
                 .cornerRadius(12)
-
-                // Model Downloads
-                modelDownloadSection
 
                 // Recording Behavior
                 VStack(alignment: .leading, spacing: 16) {
@@ -722,6 +712,17 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(.controlBackgroundColor).opacity(0.3))
                 .cornerRadius(12)
+            }
+            .padding()
+        }
+    }
+
+    // MARK: - Model Downloads Tab
+
+    private var modelDownloadsTab: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                modelDownloadSection
             }
             .padding()
         }
@@ -800,7 +801,7 @@ struct SettingsView: View {
     // MARK: - Transcription Tab
 
     private var transcriptionSettings: some View {
-        Form {
+        ScrollView {
             VStack(spacing: 20) {
                 // Language Settings
                 VStack(alignment: .leading, spacing: 16) {
@@ -915,7 +916,7 @@ struct SettingsView: View {
     // MARK: - Advanced Tab
 
     private var advancedSettings: some View {
-        Form {
+        ScrollView {
             VStack(spacing: 20) {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack {
@@ -1041,6 +1042,34 @@ struct ShortcutBindingRow: View {
     let modelChoices: [(id: String, name: String, downloaded: Bool)]
     let canDelete: Bool
     let onDelete: () -> Void
+    @ObservedObject var viewModel: SettingsViewModel
+    @State private var showError = false
+    @State private var errorMessage = ""
+
+    private var isModelDownloaded: Bool {
+        modelChoices.first(where: { $0.id == binding.modelIdentifier })?.downloaded ?? false
+    }
+
+    private var modelSizeString: String? {
+        if binding.engine == "whisper" {
+            if let model = SettingsDownloadableModels.availableModels.first(where: { $0.url.lastPathComponent == binding.modelIdentifier }) {
+                return model.sizeString
+            }
+        } else {
+            if let model = SettingsFluidAudioModels.availableModels.first(where: { $0.version == binding.modelIdentifier }) {
+                return model.sizeString
+            }
+        }
+        return nil
+    }
+
+    private var modelDescription: String? {
+        if binding.engine == "whisper" {
+            return SettingsDownloadableModels.availableModels.first(where: { $0.url.lastPathComponent == binding.modelIdentifier })?.description
+        } else {
+            return SettingsFluidAudioModels.availableModels.first(where: { $0.version == binding.modelIdentifier })?.description
+        }
+    }
 
     var body: some View {
         VStack(spacing: 6) {
@@ -1099,7 +1128,7 @@ struct ShortcutBindingRow: View {
                     }
                 }
                 .pickerStyle(.menu)
-                .frame(minWidth: 60)
+                .frame(minWidth: 120)
                 .onChange(of: binding.modelIdentifier) { _, newId in
                     if let match = modelChoices.first(where: { $0.id == newId }) {
                         binding.modelDisplayName = match.name
@@ -1113,6 +1142,85 @@ struct ShortcutBindingRow: View {
                 }
                 .buttonStyle(.borderless)
                 .disabled(!canDelete)
+            }
+
+            // Model status: download prompt or ready indicator
+            if !isModelDownloaded {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                        .font(.caption)
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("\(binding.modelDisplayName) is not downloaded")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        if let size = modelSizeString, let desc = modelDescription {
+                            Text("\(desc) — \(size)")
+                                .font(.caption2)
+                                .foregroundColor(.secondary.opacity(0.8))
+                        }
+                    }
+
+                    Spacer()
+
+                    if viewModel.isDownloading && viewModel.downloadingModelName == binding.modelDisplayName {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .scaleEffect(0.6)
+                        Button("Cancel") {
+                            viewModel.cancelDownload()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.mini)
+                    } else {
+                        Button(action: {
+                            Task {
+                                do {
+                                    if binding.engine == "whisper" {
+                                        if let model = viewModel.downloadableModels.first(where: { $0.url.lastPathComponent == binding.modelIdentifier }) {
+                                            try await viewModel.downloadModel(model)
+                                        }
+                                    } else {
+                                        if let model = viewModel.downloadableFluidAudioModels.first(where: { $0.version == binding.modelIdentifier }) {
+                                            try await viewModel.downloadFluidAudioModel(model)
+                                        }
+                                    }
+                                } catch is CancellationError {
+                                } catch {
+                                    errorMessage = error.localizedDescription
+                                    showError = true
+                                }
+                            }
+                        }) {
+                            Label("Download", systemImage: "arrow.down.circle")
+                                .font(.caption)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.mini)
+                        .disabled(viewModel.isDownloading)
+                    }
+                }
+                .padding(.horizontal, 4)
+                .padding(.vertical, 4)
+                .background(Color.orange.opacity(0.08))
+                .cornerRadius(6)
+            } else {
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                        .font(.caption)
+                    Text("\(binding.modelDisplayName) ready")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    if let size = modelSizeString {
+                        Text("(\(size))")
+                            .font(.caption2)
+                            .foregroundColor(.secondary.opacity(0.7))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 4)
             }
 
             // Initial prompt (whisper only)
@@ -1140,6 +1248,11 @@ struct ShortcutBindingRow: View {
         .padding(.vertical, 8)
         .background(Color(.textBackgroundColor).opacity(0.5))
         .cornerRadius(8)
+        .alert("Download Error", isPresented: $showError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage)
+        }
     }
 }
 
@@ -1151,7 +1264,17 @@ struct SettingsFluidAudioModel: Identifiable {
     let version: String
     var isDownloaded: Bool
     let description: String
+    let size: Int   // estimated size in MB
     var downloadProgress: Double = 0.0
+
+    var sizeString: String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useMB, .useGB]
+        formatter.countStyle = .file
+        formatter.includesUnit = true
+        formatter.isAdaptive = true
+        return formatter.string(fromByteCount: Int64(size) * 1000000)
+    }
 }
 
 struct SettingsFluidAudioModels {
@@ -1160,13 +1283,15 @@ struct SettingsFluidAudioModels {
             name: "Parakeet v3",
             version: "v3",
             isDownloaded: false,
-            description: "Multilingual, 25 languages"
+            description: "Multilingual, 25 languages",
+            size: 550
         ),
         SettingsFluidAudioModel(
             name: "Parakeet v2",
             version: "v2",
             isDownloaded: false,
-            description: "English-only, higher recall"
+            description: "English-only, higher recall",
+            size: 230
         )
     ]
 }
@@ -1238,22 +1363,31 @@ struct FluidAudioModelDownloadItemView: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(model.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                HStack(spacing: 4) {
+                    Text(model.name)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+
+                    Text("(\(model.sizeString))")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
 
                 Text(model.description)
                     .font(.caption)
                     .foregroundColor(.secondary)
+
+                if model.downloadProgress > 0 && model.downloadProgress < 1 {
+                    ProgressView(value: model.downloadProgress)
+                        .progressViewStyle(LinearProgressViewStyle())
+                        .frame(height: 4)
+                        .padding(.top, 2)
+                }
             }
 
             Spacer()
 
             if viewModel.isDownloading && viewModel.downloadingModelName == model.name {
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle())
-                    .scaleEffect(0.7)
-
                 Button("Cancel") {
                     viewModel.cancelDownload()
                 }

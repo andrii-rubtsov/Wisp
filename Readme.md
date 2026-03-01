@@ -24,11 +24,22 @@ Wisp is a macOS application that provides real-time audio transcription using th
 
 ## Installation
 
+### Homebrew (third-party tap)
+
+```shell
+brew tap andrii-rubtsov/tap
+brew install --cask wisp
+```
+
+Or as a single command:
+
 ```shell
 brew install --cask andrii-rubtsov/tap/wisp
 ```
 
-Or download the DMG from the [Releases page](https://github.com/andrii-rubtsov/Wisp/releases).
+### Manual
+
+Download the DMG from the [Releases page](https://github.com/andrii-rubtsov/Wisp/releases).
 
 ## Requirements
 

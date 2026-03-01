@@ -35,7 +35,7 @@ final class AppPreferences {
     }
     
     // Engine settings
-    @UserDefault(key: "selectedEngine", defaultValue: "whisper")
+    @UserDefault(key: "selectedEngine", defaultValue: "fluidaudio")
     var selectedEngine: String
     
     // Model settings

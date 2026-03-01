@@ -166,29 +166,16 @@ extension AppPreferences {
         UserDefaults.standard.set(true, forKey: "shortcutBindingsV2Migrated")
     }
 
-    /// Ensure at least one binding exists; create a default if empty.
+    /// Ensure at least one binding exists; create a default with Parakeet v3.
     func ensureDefaultBinding() {
         guard shortcutBindings.isEmpty else { return }
-        let engine = selectedEngine
-        let modelId: String
-        let modelName: String
-        if engine == "fluidaudio" {
-            modelId = fluidAudioModelVersion
-            modelName = modelId == "v2" ? "Parakeet v2" : "Parakeet v3"
-        } else {
-            let path = selectedWhisperModelPath ?? ""
-            modelId = (path as NSString).lastPathComponent
-            modelName = modelId.isEmpty ? "Default" : modelId
-                .replacingOccurrences(of: "ggml-", with: "")
-                .replacingOccurrences(of: ".bin", with: "")
-        }
         shortcutBindings = [ShortcutBinding(
             triggerType: .singleModifier,
             modifierKey: .leftCommand,
             keyComboSlot: "binding-0",
-            engine: engine,
-            modelIdentifier: modelId,
-            modelDisplayName: modelName
+            engine: "fluidaudio",
+            modelIdentifier: "v3",
+            modelDisplayName: "Parakeet v3"
         )]
     }
 }
