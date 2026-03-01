@@ -25,8 +25,7 @@ Wisp is a macOS application that provides real-time audio transcription using th
 ## Installation
 
 ```shell
-brew tap andrii-rubtsov/tap
-brew install --cask wisp
+brew install --cask andrii-rubtsov/tap/wisp
 ```
 
 Or download the DMG from the [Releases page](https://github.com/andrii-rubtsov/Wisp/releases).
@@ -40,15 +39,14 @@ Or download the DMG from the [Releases page](https://github.com/andrii-rubtsov/W
 
 ```shell
 git clone git@github.com:andrii-rubtsov/Wisp.git
-cd OpenSuperWhisper
+cd Wisp
 git submodule update --init --recursive
-brew install cmake libomp rust ruby
-gem install xcpretty
+brew install cmake libomp
 ./run.sh build
 ```
 
-In case of problems, consult `.github/workflows/build.yml` which is our CI workflow
-where the app gets built automatically on GitHub's CI.
+In case of problems, consult `.github/workflows/release.yml` which is our CI workflow
+where the app gets built and released automatically on every push to master.
 
 ## Contributing
 

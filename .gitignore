@@ -120,5 +120,5 @@ default.profraw
 *.profraw
 *.dmg
 .cursorrules
-OpenSuperWhisper.dmg.sha256
+Wisp.dmg.sha256
 dev_config.json

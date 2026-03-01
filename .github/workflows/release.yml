@@ -1,18 +1,20 @@
-name: Release
+name: CI
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [master]
+  pull_request:
 
 jobs:
-  build-and-release:
+  build:
     runs-on: macos-latest
     steps:
       - name: Checkout repository (with submodules)
         uses: actions/checkout@v6
         with:
           submodules: recursive
+          fetch-depth: 0
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 
       - name: Install dependencies
         run: brew install cmake libomp
@@ -27,7 +29,7 @@ jobs:
       - name: Configure libwhisper
         run: cmake -G Xcode -B libwhisper/build -S libwhisper
 
-      - name: Build OpenSuperWhisper
+      - name: Build Wisp
         run: |
           xcodebuild -scheme OpenSuperWhisper -configuration Release -jobs 8 \
             -derivedDataPath build -quiet -destination 'platform=macOS,arch=arm64' \
@@ -37,12 +39,41 @@ jobs:
             CODE_SIGNING_REQUIRED=NO build
 
       - name: Create DMG
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         run: |
           hdiutil create -volname "Wisp" \
             -srcfolder build/Build/Products/Release/Wisp.app \
             -ov -format UDZO Wisp.dmg
 
+      - name: Auto-bump version and create tag
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        id: version
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Latest tag: $LATEST_TAG"
+
+          # Strip 'v' prefix and split
+          VERSION="${LATEST_TAG#v}"
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          PATCH=$(echo "$VERSION" | cut -d. -f3)
+
+          # Bump patch
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          NEW_TAG="v${NEW_VERSION}"
+
+          echo "New version: $NEW_VERSION (tag: $NEW_TAG)"
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$NEW_TAG" -m "Release $NEW_VERSION"
+          git push origin "$NEW_TAG"
+
       - name: Generate SHA256
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         id: sha256
         run: |
           SHA=$(shasum -a 256 Wisp.dmg | cut -d' ' -f1)
@@ -50,18 +81,21 @@ jobs:
           echo "$SHA  Wisp.dmg" > Wisp.dmg.sha256
 
       - name: Create GitHub Release
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.version.outputs.tag }}
           files: |
             Wisp.dmg
             Wisp.dmg.sha256
           generate_release_notes: true
 
       - name: Update Homebrew tap
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         env:
           TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${{ steps.version.outputs.version }}"
           SHA="${{ steps.sha256.outputs.hash }}"
 
           git clone https://x-access-token:${TAP_TOKEN}@github.com/andrii-rubtsov/homebrew-tap.git /tmp/homebrew-tap
