@@ -23,11 +23,35 @@ class OnboardingViewModel: ObservableObject {
     
     @Published var selectedShortcut: OnboardingShortcutOption {
         didSet {
+            let prefs = AppPreferences.shared
             switch selectedShortcut {
             case .keyCombination:
-                AppPreferences.shared.modifierOnlyHotkey = ModifierKey.none.rawValue
+                // Clear single modifier, set up a key combo binding
+                if var bindings = prefs.shortcutBindings.first.map({ [$0] }), !bindings.isEmpty {
+                    bindings[0].triggerType = .keyCombination
+                    prefs.shortcutBindings = bindings
+                }
             case .rightOption:
-                AppPreferences.shared.modifierOnlyHotkey = ModifierKey.rightOption.rawValue
+                // Set up a single modifier binding with Right Option
+                let engine = prefs.selectedEngine
+                let modelId: String
+                let modelName: String
+                if engine == "fluidaudio" {
+                    modelId = prefs.fluidAudioModelVersion
+                    modelName = modelId == "v2" ? "Parakeet v2" : "Parakeet v3"
+                } else {
+                    let path = prefs.selectedWhisperModelPath ?? ""
+                    modelId = (path as NSString).lastPathComponent
+                    modelName = modelId.isEmpty ? "Default" : modelId
+                }
+                prefs.shortcutBindings = [ShortcutBinding(
+                    triggerType: .singleModifier,
+                    modifierKey: .rightOption,
+                    keyComboSlot: "binding-0",
+                    engine: engine,
+                    modelIdentifier: modelId,
+                    modelDisplayName: modelName
+                )]
             }
             NotificationCenter.default.post(name: .hotkeySettingsChanged, object: nil)
         }
@@ -46,13 +70,13 @@ class OnboardingViewModel: ObservableObject {
         let systemLanguage = LanguageUtil.getSystemLanguage()
         AppPreferences.shared.whisperLanguage = systemLanguage
         self.selectedLanguage = systemLanguage
-        let currentHotkey = ModifierKey(rawValue: AppPreferences.shared.modifierOnlyHotkey) ?? .none
-        if currentHotkey == .none && !AppPreferences.shared.hasCompletedOnboarding {
+        let bindings = AppPreferences.shared.shortcutBindings
+        let hasRightOptionBinding = bindings.contains { $0.triggerType == .singleModifier && $0.modifierKey == .rightOption }
+        if bindings.isEmpty && !AppPreferences.shared.hasCompletedOnboarding {
             self.selectedShortcut = .rightOption
-            AppPreferences.shared.modifierOnlyHotkey = ModifierKey.rightOption.rawValue
-            NotificationCenter.default.post(name: .hotkeySettingsChanged, object: nil)
+            // Will be saved by didSet
         } else {
-            self.selectedShortcut = currentHotkey == .rightOption ? .rightOption : .keyCombination
+            self.selectedShortcut = hasRightOptionBinding ? .rightOption : .keyCombination
         }
         
         initializeUnifiedModels()

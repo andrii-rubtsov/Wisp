@@ -7,7 +7,6 @@ import KeyboardShortcuts
 import SwiftUI
 
 extension KeyboardShortcuts.Name {
-    static let toggleRecord = Self("toggleRecord", default: .init(.backtick, modifiers: .option))
     static let escape = Self("escape", default: .init(.escape))
 }
 
@@ -18,16 +17,15 @@ class ShortcutManager {
     private var holdWorkItem: DispatchWorkItem?
     private let holdThreshold: TimeInterval = 0.3
     private var holdMode = false
-    private var useModifierOnlyHotkey = false
     private var bindings: [ShortcutBinding] = []
 
     private init() {
         print("ShortcutManager init")
 
-        AppPreferences.shared.migrateToShortcutBindings()
+        AppPreferences.shared.migrateToShortcutBindingsV2()
+        AppPreferences.shared.ensureDefaultBinding()
 
-        setupKeyboardShortcuts()
-        setupModifierKeyMonitor()
+        setupBindings()
 
         NotificationCenter.default.addObserver(
             self,
@@ -57,45 +55,31 @@ class ShortcutManager {
     }
 
     @objc private func hotkeySettingsChanged() {
-        setupModifierKeyMonitor()
+        setupBindings()
     }
 
     @objc private func accessibilityPermissionGranted() {
-        print("ShortcutManager: Accessibility permission granted, re-setting up monitor")
-        setupModifierKeyMonitor()
+        print("ShortcutManager: Accessibility permission granted, re-setting up bindings")
+        setupBindings()
     }
 
-    private func setupKeyboardShortcuts() {
-        KeyboardShortcuts.onKeyDown(for: .toggleRecord) { [weak self] in
-            self?.handleKeyDown()
-        }
+    private func setupBindings() {
+        // Clean up previous handlers
+        KeyboardShortcuts.removeAllHandlers()
+        ModifierKeyMonitor.shared.stop()
 
-        KeyboardShortcuts.onKeyUp(for: .toggleRecord) { [weak self] in
-            self?.handleKeyUp()
-        }
-
-        KeyboardShortcuts.onKeyUp(for: .escape) { [weak self] in
-            Task { @MainActor in
-                if self?.activeVm != nil {
-                    IndicatorWindowManager.shared.stopForce()
-                    self?.activeVm = nil
-                }
-            }
-        }
-        KeyboardShortcuts.disable(.escape)
-    }
-
-    private func setupModifierKeyMonitor() {
         bindings = AppPreferences.shared.shortcutBindings
 
-        if !bindings.isEmpty {
-            useModifierOnlyHotkey = true
-            KeyboardShortcuts.disable(.toggleRecord)
+        // Separate bindings by trigger type
+        let modifierBindings = bindings.filter { $0.triggerType == .singleModifier }
+        let comboBindings = bindings.filter { $0.triggerType == .keyCombination }
 
-            let modifierKeys = Set(bindings.map { $0.modifierKey })
+        // Set up modifier key bindings
+        if !modifierBindings.isEmpty {
+            let modifierKeys = Set(modifierBindings.map { $0.modifierKey })
 
             ModifierKeyMonitor.shared.onKeyDown = { [weak self] key in
-                self?.applyBinding(for: key)
+                self?.applyBinding(forModifierKey: key)
                 self?.handleKeyDown()
             }
 
@@ -105,37 +89,53 @@ class ShortcutManager {
 
             ModifierKeyMonitor.shared.start(modifierKeys: modifierKeys)
             let names = modifierKeys.map { $0.displayName }.joined(separator: ", ")
-            print("ShortcutManager: Using modifier-only hotkeys: \(names)")
-        } else {
-            // Legacy: check single modifier key preference
-            let modifierKeyString = AppPreferences.shared.modifierOnlyHotkey
-            let modifierKey = ModifierKey(rawValue: modifierKeyString) ?? .none
+            print("ShortcutManager: Monitoring modifier keys: \(names)")
+        }
 
-            if modifierKey != .none {
-                useModifierOnlyHotkey = true
-                KeyboardShortcuts.disable(.toggleRecord)
+        // Set up key combo bindings
+        for binding in comboBindings {
+            let name = binding.keyboardShortcutsName
 
-                ModifierKeyMonitor.shared.onKeyDown = { [weak self] _ in
-                    self?.handleKeyDown()
-                }
-
-                ModifierKeyMonitor.shared.onKeyUp = { [weak self] _ in
-                    self?.handleKeyUp()
-                }
-
-                ModifierKeyMonitor.shared.start(modifierKey: modifierKey)
-                print("ShortcutManager: Using legacy modifier-only hotkey: \(modifierKey.displayName)")
-            } else {
-                useModifierOnlyHotkey = false
-                ModifierKeyMonitor.shared.stop()
-                KeyboardShortcuts.enable(.toggleRecord)
-                print("ShortcutManager: Using regular keyboard shortcut")
+            KeyboardShortcuts.onKeyDown(for: name) { [weak self] in
+                self?.applyBinding(forSlot: binding.keyComboSlot)
+                self?.handleKeyDown()
             }
+
+            KeyboardShortcuts.onKeyUp(for: name) { [weak self] in
+                self?.handleKeyUp()
+            }
+
+            if let shortcut = KeyboardShortcuts.getShortcut(for: name) {
+                print("ShortcutManager: Key combo [\(binding.keyComboSlot)]: \(shortcut)")
+            } else {
+                print("ShortcutManager: Key combo [\(binding.keyComboSlot)]: (not yet assigned)")
+            }
+        }
+
+        // Escape key — always registered for force-stop
+        KeyboardShortcuts.onKeyUp(for: .escape) { [weak self] in
+            Task { @MainActor in
+                if self?.activeVm != nil {
+                    IndicatorWindowManager.shared.stopForce()
+                    self?.activeVm = nil
+                }
+            }
+        }
+        KeyboardShortcuts.disable(.escape)
+
+        print("ShortcutManager: Set up \(modifierBindings.count) modifier + \(comboBindings.count) combo bindings")
+    }
+
+    private func applyBinding(forModifierKey key: ModifierKey) {
+        guard let binding = bindings.first(where: { $0.triggerType == .singleModifier && $0.modifierKey == key }) else { return }
+        binding.apply()
+        Task { @MainActor in
+            TranscriptionService.shared.reloadEngine()
         }
     }
 
-    private func applyBinding(for key: ModifierKey) {
-        guard let binding = bindings.first(where: { $0.modifierKey == key }) else { return }
+    private func applyBinding(forSlot slot: String) {
+        guard let binding = bindings.first(where: { $0.keyComboSlot == slot }) else { return }
         binding.apply()
         Task { @MainActor in
             TranscriptionService.shared.reloadEngine()

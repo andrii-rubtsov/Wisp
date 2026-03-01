@@ -303,13 +303,10 @@ struct ContentView: View {
 
     private var currentShortcutDescription: String {
         let bindings = AppPreferences.shared.shortcutBindings
-        if let first = bindings.first {
+        guard let first = bindings.first else { return "" }
+        if first.triggerType == .singleModifier {
             return first.modifierKey.shortSymbol
-        }
-        let modifierKey = ModifierKey(rawValue: AppPreferences.shared.modifierOnlyHotkey) ?? .none
-        if modifierKey != .none {
-            return modifierKey.shortSymbol
-        } else if let shortcut = KeyboardShortcuts.getShortcut(for: .toggleRecord) {
+        } else if let shortcut = KeyboardShortcuts.getShortcut(for: first.keyboardShortcutsName) {
             return shortcut.description
         }
         return ""
@@ -414,7 +411,7 @@ struct ContentView: View {
                                         .multilineTextAlignment(.center)
                                         .padding(.horizontal)
 
-                                    if let shortcut = KeyboardShortcuts.getShortcut(for: .toggleRecord) {
+                                    if !currentShortcutDescription.isEmpty {
                                         VStack(spacing: 8) {
                                             Text("Pro Tip:")
                                                 .font(.subheadline)
@@ -424,7 +421,7 @@ struct ContentView: View {
                                                 Text("Press")
                                                     .font(.subheadline)
                                                     .foregroundColor(.secondary)
-                                                Text(shortcut.description)
+                                                Text(currentShortcutDescription)
                                                     .font(.system(size: 16, weight: .medium))
                                                     .padding(.horizontal, 6)
                                                     .padding(.vertical, 3)

@@ -20,7 +20,7 @@ class SettingsViewModel: ObservableObject {
             }
         }
     }
-    
+
     @Published var fluidAudioModelVersion: String {
         didSet {
             AppPreferences.shared.fluidAudioModelVersion = fluidAudioModelVersion
@@ -32,7 +32,7 @@ class SettingsViewModel: ObservableObject {
             initializeFluidAudioModels()
         }
     }
-    
+
     @Published var selectedModelURL: URL? {
         didSet {
             if let url = selectedModelURL {
@@ -42,14 +42,14 @@ class SettingsViewModel: ObservableObject {
     }
 
     @Published var availableModels: [URL] = []
-    
+
     @Published var downloadableModels: [SettingsDownloadableModel] = []
     @Published var downloadableFluidAudioModels: [SettingsFluidAudioModel] = []
     @Published var isDownloading: Bool = false
     @Published var downloadProgress: Double = 0.0
     @Published var downloadingModelName: String?
     private var downloadTask: Task<Void, Error>?
-    
+
     @Published var selectedLanguage: String {
         didSet {
             AppPreferences.shared.whisperLanguage = selectedLanguage
@@ -74,7 +74,7 @@ class SettingsViewModel: ObservableObject {
             AppPreferences.shared.showTimestamps = showTimestamps
         }
     }
-    
+
     @Published var temperature: Double {
         didSet {
             AppPreferences.shared.temperature = temperature
@@ -84,12 +84,6 @@ class SettingsViewModel: ObservableObject {
     @Published var noSpeechThreshold: Double {
         didSet {
             AppPreferences.shared.noSpeechThreshold = noSpeechThreshold
-        }
-    }
-
-    @Published var initialPrompt: String {
-        didSet {
-            AppPreferences.shared.initialPrompt = initialPrompt
         }
     }
 
@@ -110,20 +104,13 @@ class SettingsViewModel: ObservableObject {
             AppPreferences.shared.debugMode = debugMode
         }
     }
-    
+
     @Published var playSoundOnRecordStart: Bool {
         didSet {
             AppPreferences.shared.playSoundOnRecordStart = playSoundOnRecordStart
         }
     }
-    
-    @Published var modifierOnlyHotkey: ModifierKey {
-        didSet {
-            AppPreferences.shared.modifierOnlyHotkey = modifierOnlyHotkey.rawValue
-            NotificationCenter.default.post(name: .hotkeySettingsChanged, object: nil)
-        }
-    }
-    
+
     @Published var holdToRecord: Bool {
         didSet {
             AppPreferences.shared.holdToRecord = holdToRecord
@@ -153,12 +140,10 @@ class SettingsViewModel: ObservableObject {
         self.showTimestamps = prefs.showTimestamps
         self.temperature = prefs.temperature
         self.noSpeechThreshold = prefs.noSpeechThreshold
-        self.initialPrompt = prefs.initialPrompt
         self.useBeamSearch = prefs.useBeamSearch
         self.beamSize = prefs.beamSize
         self.debugMode = prefs.debugMode
         self.playSoundOnRecordStart = prefs.playSoundOnRecordStart
-        self.modifierOnlyHotkey = ModifierKey(rawValue: prefs.modifierOnlyHotkey) ?? .none
         self.holdToRecord = prefs.holdToRecord
         self.indicatorPosition = prefs.indicatorPosition
         self.shortcutBindings = prefs.shortcutBindings
@@ -171,7 +156,11 @@ class SettingsViewModel: ObservableObject {
         initializeFluidAudioModels()
     }
 
+    // MARK: - Shortcut Binding Management
+
     func addShortcutBinding() {
+        guard shortcutBindings.count < ShortcutBinding.maxBindings else { return }
+
         let engine = selectedEngine
         let modelId: String
         let modelName: String
@@ -185,28 +174,62 @@ class SettingsViewModel: ObservableObject {
                 $0.url.lastPathComponent == modelId
             })?.name ?? modelId
         }
-        // Pick the first unused modifier key
-        let usedKeys = Set(shortcutBindings.map { $0.modifierKey })
+
+        // Pick the first unused modifier key for single-modifier type
+        let usedKeys = Set(shortcutBindings.filter { $0.triggerType == .singleModifier }.map { $0.modifierKey })
         let available = ModifierKey.allCases.filter { $0 != .none && !usedKeys.contains($0) }
         let key = available.first ?? .leftCommand
-        shortcutBindings.append(ShortcutBinding(modifierKey: key, engine: engine, modelIdentifier: modelId, modelDisplayName: modelName))
+
+        let slot = ShortcutBinding.nextAvailableSlot(excluding: shortcutBindings)
+
+        shortcutBindings.append(ShortcutBinding(
+            triggerType: .singleModifier,
+            modifierKey: key,
+            keyComboSlot: slot,
+            engine: engine,
+            modelIdentifier: modelId,
+            modelDisplayName: modelName
+        ))
     }
 
     func removeShortcutBinding(id: UUID) {
+        // Don't allow removing the last binding
+        guard shortcutBindings.count > 1 else { return }
+
+        // Clean up KeyboardShortcuts for removed combo binding
+        if let binding = shortcutBindings.first(where: { $0.id == id }),
+           binding.triggerType == .keyCombination {
+            KeyboardShortcuts.reset(binding.keyboardShortcutsName)
+        }
+
         shortcutBindings.removeAll { $0.id == id }
     }
 
-    /// Returns available model choices for a given engine.
-    func availableModelChoices(for engine: String) -> [(id: String, name: String)] {
+    /// Returns modifier keys available for a given binding (excludes keys used by other bindings).
+    func availableModifierKeys(for bindingId: UUID) -> [ModifierKey] {
+        let usedByOthers = Set(
+            shortcutBindings
+                .filter { $0.id != bindingId && $0.triggerType == .singleModifier }
+                .map { $0.modifierKey }
+        )
+        return ModifierKey.allCases.filter { $0 != .none && !usedByOthers.contains($0) }
+    }
+
+    /// Returns available model choices for a given engine (all models, not just downloaded).
+    func availableModelChoices(for engine: String) -> [(id: String, name: String, downloaded: Bool)] {
         if engine == "fluidaudio" {
-            return SettingsFluidAudioModels.availableModels.map { (id: $0.version, name: $0.name) }
+            return downloadableFluidAudioModels.map {
+                (id: $0.version, name: $0.name, downloaded: $0.isDownloaded)
+            }
         } else {
-            return SettingsDownloadableModels.availableModels.map {
-                (id: $0.url.lastPathComponent, name: $0.name)
+            return downloadableModels.map {
+                (id: $0.url.lastPathComponent, name: $0.name, downloaded: $0.isDownloaded)
             }
         }
     }
-    
+
+    // MARK: - Model Management
+
     func initializeFluidAudioModels() {
         downloadableFluidAudioModels = SettingsFluidAudioModels.availableModels.map { model in
             var updatedModel = model
@@ -214,18 +237,13 @@ class SettingsViewModel: ObservableObject {
             return updatedModel
         }
     }
-    
+
     func isFluidAudioModelDownloaded(version: String) -> Bool {
         let asrVersion: AsrModelVersion = version == "v2" ? .v2 : .v3
-        
-        // Используем правильный путь к кэшу согласно документации:
-        // ~/Library/Application Support/FluidAudio/Models/<version-folder>/
         let cacheDirectory = AsrModels.defaultCacheDirectory(for: asrVersion)
-        
-        // Проверяем наличие всех необходимых файлов модели
         return AsrModels.modelsExist(at: cacheDirectory, version: asrVersion)
     }
-    
+
     func initializeDownloadableModels() {
         let modelManager = WhisperModelManager.shared
         downloadableModels = SettingsDownloadableModels.availableModels.map { model in
@@ -235,7 +253,7 @@ class SettingsViewModel: ObservableObject {
             return updatedModel
         }
     }
-    
+
     func loadAvailableModels() {
         availableModels = WhisperModelManager.shared.getAvailableModels()
         if selectedModelURL == nil {
@@ -243,24 +261,24 @@ class SettingsViewModel: ObservableObject {
         }
         initializeDownloadableModels()
     }
-    
+
     @MainActor
     func downloadModel(_ model: SettingsDownloadableModel) async throws {
         guard !isDownloading else { return }
-        
+
         isDownloading = true
         downloadingModelName = model.name
         downloadProgress = 0.0
-        
+
         downloadTask = Task {
             do {
                 let filename = model.url.lastPathComponent
-                
+
                 try await WhisperModelManager.shared.downloadModel(url: model.url, name: filename) { [weak self] progress in
                     Task { @MainActor [weak self] in
                         guard let self = self, !Task.isCancelled else { return }
                         guard let task = self.downloadTask, !task.isCancelled else { return }
-                        
+
                         self.downloadProgress = progress
                         if let index = self.downloadableModels.firstIndex(where: { $0.name == model.name }) {
                             self.downloadableModels[index].downloadProgress = progress
@@ -270,7 +288,7 @@ class SettingsViewModel: ObservableObject {
                         }
                     }
                 }
-                
+
                 guard !Task.isCancelled else {
                     await MainActor.run {
                         self.isDownloading = false
@@ -282,7 +300,7 @@ class SettingsViewModel: ObservableObject {
                     }
                     return
                 }
-                
+
                 await MainActor.run {
                     if let index = downloadableModels.firstIndex(where: { $0.name == model.name }) {
                         downloadableModels[index].isDownloaded = true
@@ -294,7 +312,7 @@ class SettingsViewModel: ObservableObject {
                     isDownloading = false
                     downloadingModelName = nil
                     downloadProgress = 0.0
-                    
+
                     Task { @MainActor in
                         TranscriptionService.shared.reloadModel(with: modelPath)
                     }
@@ -320,10 +338,10 @@ class SettingsViewModel: ObservableObject {
                 throw error
             }
         }
-        
+
         try await downloadTask?.value
     }
-    
+
     func cancelDownload() {
         downloadTask?.cancel()
         if let modelName = downloadingModelName {
@@ -331,7 +349,6 @@ class SettingsViewModel: ObservableObject {
                 let filename = model.url.lastPathComponent
                 WhisperModelManager.shared.cancelDownload(name: filename)
             }
-            // Reset progress for the downloading model
             if let index = downloadableModels.firstIndex(where: { $0.name == modelName }) {
                 downloadableModels[index].downloadProgress = 0.0
             }
@@ -343,25 +360,25 @@ class SettingsViewModel: ObservableObject {
         downloadingModelName = nil
         downloadProgress = 0.0
     }
-    
+
     @MainActor
     func downloadFluidAudioModel(_ model: SettingsFluidAudioModel) async throws {
         guard !isDownloading else { return }
-        
+
         isDownloading = true
         downloadingModelName = model.name
         downloadProgress = 0.0
-        
+
         if let index = downloadableFluidAudioModels.firstIndex(where: { $0.id == model.id }) {
             downloadableFluidAudioModels[index].downloadProgress = 0.0
         }
-        
+
         var wasCancelled = false
-        
+
         downloadTask = Task {
             do {
                 let version: AsrModelVersion = model.version == "v2" ? .v2 : .v3
-                
+
                 guard !Task.isCancelled else {
                     await MainActor.run {
                         self.isDownloading = false
@@ -373,9 +390,9 @@ class SettingsViewModel: ObservableObject {
                     }
                     throw CancellationError()
                 }
-                
+
                 let models = try await AsrModels.downloadAndLoad(version: version)
-                
+
                 guard !Task.isCancelled else {
                     await MainActor.run {
                         self.isDownloading = false
@@ -387,10 +404,10 @@ class SettingsViewModel: ObservableObject {
                     }
                     throw CancellationError()
                 }
-                
+
                 let manager = AsrManager(config: .default)
                 try await manager.initialize(models: models)
-                
+
                 await MainActor.run {
                     if let index = downloadableFluidAudioModels.firstIndex(where: { $0.id == model.id }) {
                         downloadableFluidAudioModels[index].isDownloaded = true
@@ -400,7 +417,7 @@ class SettingsViewModel: ObservableObject {
                     isDownloading = false
                     downloadingModelName = nil
                     downloadProgress = 1.0
-                    
+
                     Task { @MainActor in
                         TranscriptionService.shared.reloadEngine()
                     }
@@ -415,9 +432,7 @@ class SettingsViewModel: ObservableObject {
                         downloadableFluidAudioModels[index].downloadProgress = 0.0
                     }
                 }
-                // Don't re-throw CancellationError - it's a manual cancellation
             } catch {
-                // Check if we were cancelled before the error occurred
                 if Task.isCancelled {
                     wasCancelled = true
                     await MainActor.run {
@@ -441,21 +456,18 @@ class SettingsViewModel: ObservableObject {
                 }
             }
         }
-        
-        // Handle cancellation gracefully - don't throw if cancelled
+
         do {
             try await downloadTask?.value
         } catch is CancellationError {
-            // Already handled in catch block above, just consume the error
             wasCancelled = true
         } catch {
-            // If we were cancelled, don't throw
             if !wasCancelled {
                 throw error
             }
         }
     }
-    
+
     @MainActor
     func downloadFluidAudioModel() async throws {
         let versionString = AppPreferences.shared.fluidAudioModelVersion
@@ -464,6 +476,8 @@ class SettingsViewModel: ObservableObject {
         }
     }
 }
+
+// MARK: - Model Data Structures
 
 struct SettingsDownloadableModel: Identifiable {
     let id = UUID()
@@ -542,61 +556,47 @@ struct Settings {
     }
 }
 
+// MARK: - Settings View
+
 struct SettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
     @Environment(\.dismiss) var dismiss
-    @State private var isRecordingNewShortcut = false
     @State private var selectedTab = 0
     @State private var previousModelURL: URL?
-    
+
     var body: some View {
         TabView(selection: $selectedTab) {
-
-             // Shortcut Settings
             shortcutSettings
                 .tabItem {
                     Label("Shortcuts", systemImage: "command")
                 }
                 .tag(0)
-            // Model Settings
-            modelSettings
-                .tabItem {
-                    Label("Model", systemImage: "cpu")
-                }
-                .tag(1)
-            
-            // Transcription Settings
+
             transcriptionSettings
                 .tabItem {
                     Label("Transcription", systemImage: "text.bubble")
                 }
-                .tag(2)
-            
-            // Advanced Settings
+                .tag(1)
+
             advancedSettings
                 .tabItem {
                     Label("Advanced", systemImage: "gear")
                 }
-                .tag(3)
-            }
+                .tag(2)
+        }
         .padding()
         .frame(width: 550)
         .background(Color(.windowBackgroundColor))
         .safeAreaInset(edge: .bottom) {
             HStack {
                 Button("Done") {
-                    if viewModel.selectedEngine == "whisper" {
-                        if viewModel.selectedModelURL != previousModelURL, let modelPath = viewModel.selectedModelURL?.path {
-                            TranscriptionService.shared.reloadModel(with: modelPath)
-                        }
-                    }
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.regular)
-                
+
                 Spacer()
-                
+
                 Link(destination: URL(string: "https://github.com/andrii-rubtsov/Wisp")!) {
                     HStack(spacing: 4) {
                         Image(systemName: "star")
@@ -613,450 +613,12 @@ struct SettingsView: View {
         }
         .onAppear {
             previousModelURL = viewModel.selectedModelURL
-            if viewModel.selectedEngine == "fluidaudio" {
-                viewModel.initializeFluidAudioModels()
-            }
+            viewModel.initializeFluidAudioModels()
+            viewModel.initializeDownloadableModels()
         }
-        .onChange(of: viewModel.selectedEngine) { _, newEngine in
-            if newEngine == "fluidaudio" {
-                viewModel.initializeFluidAudioModels()
-            }
-        }
-        .onChange(of: viewModel.fluidAudioModelVersion) { _, _ in
-            Task { @MainActor in
-                TranscriptionService.shared.reloadEngine()
-            }
-        }
-        .onChange(of: viewModel.selectedModelURL) { _, newURL in
-            if viewModel.selectedEngine == "whisper", let modelPath = newURL?.path {
-                Task { @MainActor in
-                    TranscriptionService.shared.reloadModel(with: modelPath)
-                }
-            }
-        }
-    }
-    
-    private var modelSettings: some View {
-        Form {
-            Section {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Speech Recognition Engine")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    Picker("Engine", selection: $viewModel.selectedEngine) {
-                        Text("Parakeet").tag("fluidaudio")
-                        Text("Whisper").tag("whisper")
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.bottom, 8)
-                    
-                    if viewModel.selectedEngine == "whisper" {
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Whisper Model")
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                            
-                            Text("Download Models")
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                                .padding(.top, 8)
-                            
-                            ScrollView {
-                                VStack(spacing: 12) {
-                                    ForEach($viewModel.downloadableModels) { $model in
-                                        ModelDownloadItemView(model: $model, viewModel: viewModel)
-                                    }
-                                }
-                            }
-                            .frame(maxHeight: 200)
-                            
-                            if viewModel.isDownloading {
-                                VStack(spacing: 8) {
-                                    HStack {
-                                        if viewModel.downloadProgress > 0 {
-                                            ProgressView(value: viewModel.downloadProgress)
-                                                .progressViewStyle(LinearProgressViewStyle())
-                                        } else {
-                                            ProgressView()
-                                                .progressViewStyle(CircularProgressViewStyle())
-                                        }
-                                        
-                                        Spacer()
-                                        
-                                        Button("Cancel") {
-                                            viewModel.cancelDownload()
-                                        }
-                                        .buttonStyle(.bordered)
-                                    }
-                                    
-                                    if let downloadingName = viewModel.downloadingModelName {
-                                        Text("Downloading: \(downloadingName)")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                                .padding(.top, 8)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text("Models Directory:")
-                                        .font(.subheadline)
-                                    Button(action: {
-                                        NSWorkspace.shared.open(WhisperModelManager.shared.modelsDirectory)
-                                    }) {
-                                        Label("Open Folder", systemImage: "folder")
-                                            .font(.subheadline)
-                                    }
-                                    .buttonStyle(.borderless)
-                                    .help("Open models directory")
-                                }
-                                Text(WhisperModelManager.shared.modelsDirectory.path)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .textSelection(.enabled)
-                                    .padding(8)
-                                    .background(Color(.textBackgroundColor).opacity(0.5))
-                                    .cornerRadius(6)
-                            }
-                            .padding(.top, 8)
-                        }
-                    } else {
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Parakeet Model")
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                            
-                            Text("Download Models")
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                                .padding(.top, 8)
-                            
-                            ScrollView {
-                                VStack(spacing: 12) {
-                                    ForEach($viewModel.downloadableFluidAudioModels) { $model in
-                                        FluidAudioModelDownloadItemView(model: $model, viewModel: viewModel)
-                                    }
-                                }
-                            }
-                            .frame(maxHeight: 200)
-                            
-                            if viewModel.isDownloading {
-                                VStack(spacing: 8) {
-                                    HStack {
-                                        if viewModel.downloadProgress > 0 {
-                                            ProgressView(value: viewModel.downloadProgress)
-                                                .progressViewStyle(LinearProgressViewStyle())
-                                        } else {
-                                            ProgressView()
-                                                .progressViewStyle(CircularProgressViewStyle())
-                                        }
-                                        
-                                        Spacer()
-                                        
-                                        Button("Cancel") {
-                                            viewModel.cancelDownload()
-                                        }
-                                        .buttonStyle(.bordered)
-                                    }
-                                    
-                                    if let downloadingName = viewModel.downloadingModelName {
-                                        Text("Downloading: \(downloadingName)")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                                .padding(.top, 8)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text("Models Directory:")
-                                        .font(.subheadline)
-                                    Button(action: {
-                                        let cacheDir = AsrModels.defaultCacheDirectory(for: .v3)
-                                        let parentDir = cacheDir.deletingLastPathComponent()
-                                        NSWorkspace.shared.open(parentDir)
-                                    }) {
-                                        Label("Open Folder", systemImage: "folder")
-                                            .font(.subheadline)
-                                    }
-                                    .buttonStyle(.borderless)
-                                    .help("Open models directory")
-                                }
-                                Text(AsrModels.defaultCacheDirectory(for: .v3).deletingLastPathComponent().path)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .textSelection(.enabled)
-                                    .padding(8)
-                                    .background(Color(.textBackgroundColor).opacity(0.5))
-                                    .cornerRadius(6)
-                            }
-                            .padding(.top, 8)
-                        }
-                    }
-                }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.controlBackgroundColor).opacity(0.3))
-                .cornerRadius(12)
-            }
-        }
-        .padding()
-    }
-    
-    private var transcriptionSettings: some View {
-        Form {
-            VStack(spacing: 20) {
-                // Language Settings
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Language Settings")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Transcription Language")
-                            .font(.subheadline)
-                        
-                        Picker("Language", selection: $viewModel.selectedLanguage) {
-                            ForEach(LanguageUtil.availableLanguages, id: \.self) { code in
-                                Text(LanguageUtil.languageNames[code] ?? code)
-                                    .tag(code)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color(.controlBackgroundColor))
-                        .cornerRadius(8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        HStack {
-                            Text("Translate to English")
-                                .font(.subheadline)
-                            Spacer()
-                            Toggle("", isOn: $viewModel.translateToEnglish)
-                                .toggleStyle(SwitchToggleStyle(tint: Color.accentColor))
-                                .labelsHidden()
-                        }
-                        .padding(.top, 4)
-                        
-                    }
-                }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.controlBackgroundColor).opacity(0.3))
-                .cornerRadius(12)
-                
-                // Output Options
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Output Options")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            Text("Show Timestamps")
-                                .font(.subheadline)
-                            Spacer()
-                            Toggle("", isOn: $viewModel.showTimestamps)
-                                .toggleStyle(SwitchToggleStyle(tint: Color.accentColor))
-                                .labelsHidden()
-                        }
-                        
-                        HStack {
-                            Text("Suppress Blank Audio")
-                                .font(.subheadline)
-                            Spacer()
-                            Toggle("", isOn: $viewModel.suppressBlankAudio)
-                                .toggleStyle(SwitchToggleStyle(tint: Color.accentColor))
-                                .labelsHidden()
-                        }
-                    }
-                }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.controlBackgroundColor).opacity(0.3))
-                .cornerRadius(12)
-                
-                // Initial Prompt
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Initial Prompt")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        TextEditor(text: $viewModel.initialPrompt)
-                            .frame(height: 60)
-                            .padding(6)
-                            .background(Color(.textBackgroundColor))
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
-                        
-                        Text("Optional text to guide the model's transcription")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.controlBackgroundColor).opacity(0.3))
-                .cornerRadius(12)
-                
-                // Transcriptions Directory
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Transcriptions Directory")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Directory:")
-                                .font(.subheadline)
-                            Spacer()
-                            Button(action: {
-                                NSWorkspace.shared.open(Recording.recordingsDirectory)
-                            }) {
-                                Label("Open Folder", systemImage: "folder")
-                                    .font(.subheadline)
-                            }
-                            .buttonStyle(.borderless)
-                            .help("Open transcriptions directory")
-                        }
-                        
-                        Text(Recording.recordingsDirectory.path)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .textSelection(.enabled)
-                            .padding(8)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color(.textBackgroundColor).opacity(0.5))
-                            .cornerRadius(6)
-                    }
-                }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.controlBackgroundColor).opacity(0.3))
-                .cornerRadius(12)
-            }
-            .padding()
-        }
-    }
-    
-    private var advancedSettings: some View {
-        Form {
-            VStack(spacing: 20) {
-                // Decoding Strategy
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Decoding Strategy")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            Text("Use Beam Search")
-                                .font(.subheadline)
-                            Spacer()
-                            Toggle("", isOn: $viewModel.useBeamSearch)
-                                .toggleStyle(SwitchToggleStyle(tint: Color.accentColor))
-                                .labelsHidden()
-                                .help("Beam search can provide better results but is slower")
-                        }
-                        
-                        if viewModel.useBeamSearch {
-                            HStack {
-                                Text("Beam Size:")
-                                    .font(.subheadline)
-                                Spacer()
-                                Stepper("\(viewModel.beamSize)", value: $viewModel.beamSize, in: 1...10)
-                                    .help("Number of beams to use in beam search")
-                                    .frame(width: 120)
-                            }
-                        }
-                    }
-                }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.controlBackgroundColor).opacity(0.3))
-                .cornerRadius(12)
-                
-                // Model Parameters
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Model Parameters")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    VStack(alignment: .leading, spacing: 14) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                Text("Temperature:")
-                                    .font(.subheadline)
-                                Spacer()
-                                Text(String(format: "%.2f", viewModel.temperature))
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            Slider(value: $viewModel.temperature, in: 0.0...1.0, step: 0.1)
-                                .help("Higher values make the output more random")
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                Text("No Speech Threshold:")
-                                    .font(.subheadline)
-                                Spacer()
-                                Text(String(format: "%.2f", viewModel.noSpeechThreshold))
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            Slider(value: $viewModel.noSpeechThreshold, in: 0.0...1.0, step: 0.1)
-                                .help("Threshold for detecting speech vs. silence")
-                        }
-                    }
-                }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.controlBackgroundColor).opacity(0.3))
-                .cornerRadius(12)
-                
-                // Debug Options
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Debug Options")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    HStack {
-                        Text("Debug Mode")
-                            .font(.subheadline)
-                        Spacer()
-                        Toggle("", isOn: $viewModel.debugMode)
-                            .toggleStyle(SwitchToggleStyle(tint: Color.accentColor))
-                            .labelsHidden()
-                            .help("Enable additional logging and debugging information")
-                    }
-                }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.controlBackgroundColor).opacity(0.3))
-                .cornerRadius(12)
-            }
-            .padding()
-        }
-    }
-    
-    private var hasBindings: Bool {
-        !viewModel.shortcutBindings.isEmpty
     }
 
-    private var useModifierKey: Bool {
-        hasBindings || viewModel.modifierOnlyHotkey != .none
-    }
+    // MARK: - Shortcuts Tab
 
     private var shortcutSettings: some View {
         Form {
@@ -1067,71 +629,38 @@ struct SettingsView: View {
                         .font(.headline)
                         .foregroundColor(.primary)
 
-                    VStack(alignment: .leading, spacing: 16) {
-                        Picker("", selection: Binding(
-                            get: { hasBindings },
-                            set: { useBindings in
-                                if useBindings && viewModel.shortcutBindings.isEmpty {
-                                    viewModel.addShortcutBinding()
-                                } else if !useBindings {
-                                    viewModel.shortcutBindings = []
-                                    viewModel.modifierOnlyHotkey = .none
-                                }
-                            }
-                        )) {
-                            Text("Key Combination").tag(false)
-                            Text("Per-Model Shortcuts").tag(true)
+                    VStack(spacing: 8) {
+                        ForEach($viewModel.shortcutBindings) { $binding in
+                            ShortcutBindingRow(
+                                binding: $binding,
+                                availableModifierKeys: viewModel.availableModifierKeys(for: binding.id),
+                                modelChoices: viewModel.availableModelChoices(for: binding.engine),
+                                canDelete: viewModel.shortcutBindings.count > 1,
+                                onDelete: { viewModel.removeShortcutBinding(id: binding.id) }
+                            )
                         }
-                        .pickerStyle(.segmented)
 
-                        if hasBindings {
-                            VStack(spacing: 8) {
-                                ForEach($viewModel.shortcutBindings) { $binding in
-                                    ShortcutBindingRow(
-                                        binding: $binding,
-                                        modelChoices: viewModel.availableModelChoices(for: binding.engine),
-                                        onDelete: { viewModel.removeShortcutBinding(id: binding.id) }
-                                    )
-                                }
-
-                                Button(action: { viewModel.addShortcutBinding() }) {
-                                    Label("Add Shortcut", systemImage: "plus")
-                                        .font(.subheadline)
-                                }
-                                .buttonStyle(.borderless)
-                                .padding(.top, 4)
+                        if viewModel.shortcutBindings.count < ShortcutBinding.maxBindings {
+                            Button(action: { viewModel.addShortcutBinding() }) {
+                                Label("Add Shortcut", systemImage: "plus")
+                                    .font(.subheadline)
                             }
-
-                            Text("Each shortcut triggers recording with its assigned engine and model")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        } else {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text("Shortcut")
-                                        .font(.subheadline)
-                                    Spacer()
-                                    KeyboardShortcuts.Recorder("", name: .toggleRecord)
-                                        .frame(width: 150)
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 10)
-                                .background(Color(.textBackgroundColor).opacity(0.5))
-                                .cornerRadius(8)
-
-                                if isRecordingNewShortcut {
-                                    Text("Press your new shortcut combination...")
-                                        .foregroundColor(.secondary)
-                                        .font(.subheadline)
-                                }
-                            }
+                            .buttonStyle(.borderless)
+                            .padding(.top, 4)
                         }
                     }
+
+                    Text("Each shortcut triggers recording with its assigned engine, model, and initial prompt")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(.controlBackgroundColor).opacity(0.3))
                 .cornerRadius(12)
+
+                // Model Downloads
+                modelDownloadSection
 
                 // Recording Behavior
                 VStack(alignment: .leading, spacing: 16) {
@@ -1197,66 +726,424 @@ struct SettingsView: View {
             .padding()
         }
     }
+
+    // MARK: - Model Download Section
+
+    private var modelDownloadSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Model Downloads")
+                .font(.headline)
+                .foregroundColor(.primary)
+
+            // Whisper Models
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Whisper Models")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+
+                VStack(spacing: 8) {
+                    ForEach($viewModel.downloadableModels) { $model in
+                        ModelDownloadItemView(model: $model, viewModel: viewModel)
+                    }
+                }
+            }
+
+            Divider()
+
+            // Parakeet Models
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Parakeet Models")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+
+                VStack(spacing: 8) {
+                    ForEach($viewModel.downloadableFluidAudioModels) { $model in
+                        FluidAudioModelDownloadItemView(model: $model, viewModel: viewModel)
+                    }
+                }
+            }
+
+            // Download progress
+            if viewModel.isDownloading {
+                VStack(spacing: 8) {
+                    HStack {
+                        if viewModel.downloadProgress > 0 {
+                            ProgressView(value: viewModel.downloadProgress)
+                                .progressViewStyle(LinearProgressViewStyle())
+                        } else {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle())
+                        }
+
+                        Spacer()
+
+                        Button("Cancel") {
+                            viewModel.cancelDownload()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+
+                    if let downloadingName = viewModel.downloadingModelName {
+                        Text("Downloading: \(downloadingName)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.controlBackgroundColor).opacity(0.3))
+        .cornerRadius(12)
+    }
+
+    // MARK: - Transcription Tab
+
+    private var transcriptionSettings: some View {
+        Form {
+            VStack(spacing: 20) {
+                // Language Settings
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Language Settings")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Transcription Language")
+                            .font(.subheadline)
+
+                        Picker("Language", selection: $viewModel.selectedLanguage) {
+                            ForEach(LanguageUtil.availableLanguages, id: \.self) { code in
+                                Text(LanguageUtil.languageNames[code] ?? code)
+                                    .tag(code)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color(.controlBackgroundColor))
+                        .cornerRadius(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        HStack {
+                            Text("Translate to English")
+                                .font(.subheadline)
+                            Spacer()
+                            Toggle("", isOn: $viewModel.translateToEnglish)
+                                .toggleStyle(SwitchToggleStyle(tint: Color.accentColor))
+                                .labelsHidden()
+                        }
+                        .padding(.top, 4)
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.controlBackgroundColor).opacity(0.3))
+                .cornerRadius(12)
+
+                // Output Options
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Output Options")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("Show Timestamps")
+                                .font(.subheadline)
+                            Spacer()
+                            Toggle("", isOn: $viewModel.showTimestamps)
+                                .toggleStyle(SwitchToggleStyle(tint: Color.accentColor))
+                                .labelsHidden()
+                        }
+
+                        HStack {
+                            Text("Suppress Blank Audio")
+                                .font(.subheadline)
+                            Spacer()
+                            Toggle("", isOn: $viewModel.suppressBlankAudio)
+                                .toggleStyle(SwitchToggleStyle(tint: Color.accentColor))
+                                .labelsHidden()
+                        }
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.controlBackgroundColor).opacity(0.3))
+                .cornerRadius(12)
+
+                // Transcriptions Directory
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Transcriptions Directory")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Directory:")
+                                .font(.subheadline)
+                            Spacer()
+                            Button(action: {
+                                NSWorkspace.shared.open(Recording.recordingsDirectory)
+                            }) {
+                                Label("Open Folder", systemImage: "folder")
+                                    .font(.subheadline)
+                            }
+                            .buttonStyle(.borderless)
+                            .help("Open transcriptions directory")
+                        }
+
+                        Text(Recording.recordingsDirectory.path)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .textSelection(.enabled)
+                            .padding(8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.textBackgroundColor).opacity(0.5))
+                            .cornerRadius(6)
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.controlBackgroundColor).opacity(0.3))
+                .cornerRadius(12)
+            }
+            .padding()
+        }
+    }
+
+    // MARK: - Advanced Tab
+
+    private var advancedSettings: some View {
+        Form {
+            VStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        Text("Decoding Strategy")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                        Text("Whisper only")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.secondary.opacity(0.15))
+                            .cornerRadius(4)
+                    }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("Use Beam Search")
+                                .font(.subheadline)
+                            Spacer()
+                            Toggle("", isOn: $viewModel.useBeamSearch)
+                                .toggleStyle(SwitchToggleStyle(tint: Color.accentColor))
+                                .labelsHidden()
+                                .help("Beam search can provide better results but is slower")
+                        }
+
+                        if viewModel.useBeamSearch {
+                            HStack {
+                                Text("Beam Size:")
+                                    .font(.subheadline)
+                                Spacer()
+                                Stepper("\(viewModel.beamSize)", value: $viewModel.beamSize, in: 1...10)
+                                    .help("Number of beams to use in beam search")
+                                    .frame(width: 120)
+                            }
+                        }
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.controlBackgroundColor).opacity(0.3))
+                .cornerRadius(12)
+
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        Text("Model Parameters")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                        Text("Whisper only")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.secondary.opacity(0.15))
+                            .cornerRadius(4)
+                    }
+
+                    VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text("Temperature:")
+                                    .font(.subheadline)
+                                Spacer()
+                                Text(String(format: "%.2f", viewModel.temperature))
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            Slider(value: $viewModel.temperature, in: 0.0...1.0, step: 0.1)
+                                .help("Higher values make the output more random")
+                        }
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text("No Speech Threshold:")
+                                    .font(.subheadline)
+                                Spacer()
+                                Text(String(format: "%.2f", viewModel.noSpeechThreshold))
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            Slider(value: $viewModel.noSpeechThreshold, in: 0.0...1.0, step: 0.1)
+                                .help("Threshold for detecting speech vs. silence")
+                        }
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.controlBackgroundColor).opacity(0.3))
+                .cornerRadius(12)
+
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Debug Options")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+
+                    HStack {
+                        Text("Debug Mode")
+                            .font(.subheadline)
+                        Spacer()
+                        Toggle("", isOn: $viewModel.debugMode)
+                            .toggleStyle(SwitchToggleStyle(tint: Color.accentColor))
+                            .labelsHidden()
+                            .help("Enable additional logging and debugging information")
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.controlBackgroundColor).opacity(0.3))
+                .cornerRadius(12)
+            }
+            .padding()
+        }
+    }
 }
 
-/// A single row in the shortcut bindings list.
+// MARK: - Shortcut Binding Row
+
 struct ShortcutBindingRow: View {
     @Binding var binding: ShortcutBinding
-    let modelChoices: [(id: String, name: String)]
+    let availableModifierKeys: [ModifierKey]
+    let modelChoices: [(id: String, name: String, downloaded: Bool)]
+    let canDelete: Bool
     let onDelete: () -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
-            Picker("", selection: $binding.modifierKey) {
-                ForEach(ModifierKey.allCases.filter { $0 != .none }) { key in
-                    Text(key.displayName).tag(key)
+        VStack(spacing: 6) {
+            HStack(spacing: 8) {
+                // Trigger type picker
+                Picker("", selection: $binding.triggerType) {
+                    ForEach(ShortcutTriggerType.allCases) { type in
+                        Text(type.displayName).tag(type)
+                    }
                 }
-            }
-            .pickerStyle(.menu)
-            .frame(width: 160)
+                .pickerStyle(.menu)
+                .frame(width: 110)
 
-            Picker("", selection: $binding.engine) {
-                Text("Whisper").tag("whisper")
-                Text("Parakeet").tag("fluidaudio")
-            }
-            .pickerStyle(.menu)
-            .frame(width: 90)
-            .onChange(of: binding.engine) { _, newEngine in
-                // Reset model to first available when engine changes
-                let choices = newEngine == "fluidaudio"
-                    ? SettingsFluidAudioModels.availableModels.map { (id: $0.version, name: $0.name) }
-                    : SettingsDownloadableModels.availableModels.map { (id: $0.url.lastPathComponent, name: $0.name) }
-                if let first = choices.first {
-                    binding.modelIdentifier = first.id
-                    binding.modelDisplayName = first.name
+                // Key configuration
+                if binding.triggerType == .singleModifier {
+                    Picker("", selection: $binding.modifierKey) {
+                        ForEach(availableModifierKeys) { key in
+                            Text(key.displayName).tag(key)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(width: 150)
+                } else {
+                    KeyboardShortcuts.Recorder("", name: binding.keyboardShortcutsName)
+                        .frame(width: 150)
                 }
+
+                // Engine picker
+                Picker("", selection: $binding.engine) {
+                    Text("Whisper").tag("whisper")
+                    Text("Parakeet").tag("fluidaudio")
+                }
+                .pickerStyle(.menu)
+                .frame(width: 90)
+                .onChange(of: binding.engine) { _, newEngine in
+                    let choices = newEngine == "fluidaudio"
+                        ? SettingsFluidAudioModels.availableModels.map { (id: $0.version, name: $0.name) }
+                        : SettingsDownloadableModels.availableModels.map { (id: $0.url.lastPathComponent, name: $0.name) }
+                    if let first = choices.first {
+                        binding.modelIdentifier = first.id
+                        binding.modelDisplayName = first.name
+                    }
+                }
+
+                // Model picker
+                Picker("", selection: $binding.modelIdentifier) {
+                    ForEach(modelChoices, id: \.id) { choice in
+                        HStack {
+                            Text(choice.name)
+                            if !choice.downloaded {
+                                Text("(not downloaded)")
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .tag(choice.id)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(minWidth: 60)
+                .onChange(of: binding.modelIdentifier) { _, newId in
+                    if let match = modelChoices.first(where: { $0.id == newId }) {
+                        binding.modelDisplayName = match.name
+                    }
+                }
+
+                // Delete button
+                Button(action: onDelete) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(canDelete ? .secondary : .secondary.opacity(0.3))
+                }
+                .buttonStyle(.borderless)
+                .disabled(!canDelete)
             }
 
-            Picker("", selection: $binding.modelIdentifier) {
-                ForEach(modelChoices, id: \.id) { choice in
-                    Text(choice.name).tag(choice.id)
+            // Initial prompt (whisper only)
+            if binding.engine == "whisper" {
+                HStack(spacing: 6) {
+                    Text("Prompt:")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .frame(width: 45, alignment: .leading)
+                    TextField("Initial prompt for Whisper...", text: $binding.initialPrompt)
+                        .textFieldStyle(.plain)
+                        .font(.caption)
+                        .padding(4)
+                        .background(Color(.textBackgroundColor))
+                        .cornerRadius(4)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                        )
                 }
+                .padding(.top, 2)
             }
-            .pickerStyle(.menu)
-            .frame(minWidth: 80)
-            .onChange(of: binding.modelIdentifier) { _, newId in
-                if let match = modelChoices.first(where: { $0.id == newId }) {
-                    binding.modelDisplayName = match.name
-                }
-            }
-
-            Button(action: onDelete) {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(.secondary)
-            }
-            .buttonStyle(.borderless)
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .background(Color(.textBackgroundColor).opacity(0.5))
         .cornerRadius(8)
     }
 }
+
+// MARK: - Model Download Item Views
 
 struct SettingsFluidAudioModel: Identifiable {
     let id = UUID()
@@ -1347,72 +1234,41 @@ struct FluidAudioModelDownloadItemView: View {
     @ObservedObject var viewModel: SettingsViewModel
     @State private var showError = false
     @State private var errorMessage = ""
-    
-    var isSelected: Bool {
-        viewModel.fluidAudioModelVersion == model.version
-    }
-    
+
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(model.name)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    if model.isDownloaded {
-                        Image(systemName: "arrow.down.circle.fill")
-                            .foregroundColor(.blue)
-                            .imageScale(.small)
-                    }
-                }
-                
+            VStack(alignment: .leading, spacing: 2) {
+                Text(model.name)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+
                 Text(model.description)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                
-                if viewModel.isDownloading && viewModel.downloadingModelName == model.name {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle())
-                        .scaleEffect(0.7)
-                        .padding(.top, 4)
-                } else if model.downloadProgress > 0 && model.downloadProgress < 1 {
-                    ProgressView(value: model.downloadProgress)
-                        .progressViewStyle(LinearProgressViewStyle())
-                        .frame(height: 6)
-                        .padding(.top, 4)
-                }
             }
-            
+
             Spacer()
-            
+
             if viewModel.isDownloading && viewModel.downloadingModelName == model.name {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .scaleEffect(0.7)
+
                 Button("Cancel") {
                     viewModel.cancelDownload()
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
             } else if model.isDownloaded {
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                        .imageScale(.large)
-                } else {
-                    Button(action: {
-                        viewModel.fluidAudioModelVersion = model.version
-                    }) {
-                        Text("Select")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
-                }
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                    .imageScale(.large)
             } else {
                 Button(action: {
                     Task {
                         do {
                             try await viewModel.downloadFluidAudioModel(model)
                         } catch is CancellationError {
-                            // Don't show error for manual cancellation
                         } catch {
                             errorMessage = error.localizedDescription
                             showError = true
@@ -1426,15 +1282,9 @@ struct FluidAudioModelDownloadItemView: View {
                 .disabled(viewModel.isDownloading)
             }
         }
-        .padding(12)
-        .background(isSelected ? Color(.controlBackgroundColor).opacity(0.7) : Color(.controlBackgroundColor).opacity(0.5))
+        .padding(10)
+        .background(Color(.controlBackgroundColor).opacity(0.5))
         .cornerRadius(8)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            if model.isDownloaded && !isSelected {
-                viewModel.fluidAudioModelVersion = model.version
-            }
-        }
         .alert("Download Error", isPresented: $showError) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -1448,44 +1298,34 @@ struct ModelDownloadItemView: View {
     @ObservedObject var viewModel: SettingsViewModel
     @State private var showError = false
     @State private var errorMessage = ""
-    
-    var isSelected: Bool {
-        if let selectedURL = viewModel.selectedModelURL {
-            let filename = model.url.lastPathComponent
-            return selectedURL.lastPathComponent == filename
-        }
-        return false
-    }
-    
+
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
                     Text(model.name)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                    
-                    if model.isDownloaded {
-                        Image(systemName: "arrow.down.circle.fill")
-                            .foregroundColor(.blue)
-                            .imageScale(.small)
-                    }
+
+                    Text("(\(model.sizeString))")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
-                
+
                 Text(model.description)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                
+
                 if model.downloadProgress > 0 && model.downloadProgress < 1 {
                     ProgressView(value: model.downloadProgress)
                         .progressViewStyle(LinearProgressViewStyle())
-                        .frame(height: 6)
-                        .padding(.top, 4)
+                        .frame(height: 4)
+                        .padding(.top, 2)
                 }
             }
-            
+
             Spacer()
-            
+
             if viewModel.isDownloading && viewModel.downloadingModelName == model.name {
                 Button("Cancel") {
                     viewModel.cancelDownload()
@@ -1493,27 +1333,15 @@ struct ModelDownloadItemView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
             } else if model.isDownloaded {
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                        .imageScale(.large)
-                } else {
-                    Button(action: {
-                        let modelPath = WhisperModelManager.shared.modelsDirectory.appendingPathComponent(model.url.lastPathComponent).path
-                        viewModel.selectedModelURL = URL(fileURLWithPath: modelPath)
-                    }) {
-                        Text("Select")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
-                }
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                    .imageScale(.large)
             } else {
                 Button(action: {
                     Task {
                         do {
                             try await viewModel.downloadModel(model)
                         } catch is CancellationError {
-                            // Don't show error for manual cancellation
                         } catch {
                             errorMessage = error.localizedDescription
                             showError = true
@@ -1527,16 +1355,9 @@ struct ModelDownloadItemView: View {
                 .disabled(viewModel.isDownloading)
             }
         }
-        .padding(12)
-        .background(isSelected ? Color(.controlBackgroundColor).opacity(0.7) : Color(.controlBackgroundColor).opacity(0.5))
+        .padding(10)
+        .background(Color(.controlBackgroundColor).opacity(0.5))
         .cornerRadius(8)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            if model.isDownloaded && !isSelected {
-                let modelPath = WhisperModelManager.shared.modelsDirectory.appendingPathComponent(model.url.lastPathComponent).path
-                viewModel.selectedModelURL = URL(fileURLWithPath: modelPath)
-            }
-        }
         .alert("Download Error", isPresented: $showError) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -1544,4 +1365,3 @@ struct ModelDownloadItemView: View {
         }
     }
 }
-
