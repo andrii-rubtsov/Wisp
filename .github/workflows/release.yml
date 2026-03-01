@@ -50,7 +50,11 @@ jobs:
             -ov -format UDZO Wisp.dmg
 
       - name: Generate SHA256
-        run: shasum -a 256 Wisp.dmg > Wisp.dmg.sha256
+        id: sha256
+        run: |
+          SHA=$(shasum -a 256 Wisp.dmg | cut -d' ' -f1)
+          echo "hash=$SHA" >> "$GITHUB_OUTPUT"
+          echo "$SHA  Wisp.dmg" > Wisp.dmg.sha256
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -59,3 +63,22 @@ jobs:
             Wisp.dmg
             Wisp.dmg.sha256
           generate_release_notes: true
+
+      - name: Update Homebrew tap
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          SHA="${{ steps.sha256.outputs.hash }}"
+
+          git clone https://x-access-token:${TAP_TOKEN}@github.com/andrii-rubtsov/homebrew-tap.git /tmp/homebrew-tap
+          cd /tmp/homebrew-tap
+
+          sed -i '' "s/version \".*\"/version \"${VERSION}\"/" Casks/wisp.rb
+          sed -i '' "s/sha256 \".*\"/sha256 \"${SHA}\"/" Casks/wisp.rb
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/wisp.rb
+          git commit -m "Update Wisp to ${VERSION}"
+          git push
