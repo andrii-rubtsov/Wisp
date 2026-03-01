@@ -74,6 +74,7 @@ class AppState: ObservableObject {
 class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     private var statusItem: NSStatusItem?
     private var mainWindow: NSWindow?
+    private var settingsWindow: NSWindow?
     private var languageSubmenu: NSMenu?
     private var microphoneService = MicrophoneService.shared
     private var microphoneObserver: AnyCancellable?
@@ -278,6 +279,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         menu.addItem(microphoneMenu)
         
         menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ","))
+        menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q"))
         
         statusItem?.menu = menu
@@ -297,6 +300,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         showMainWindow()
     }
     
+    @objc private func openSettings() {
+        if let window = settingsWindow, window.isVisible {
+            window.makeKeyAndOrderFront(nil)
+            NSApplication.shared.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let settingsView = SettingsView()
+        let hostingController = NSHostingController(rootView: settingsView)
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = "Settings"
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.setContentSize(NSSize(width: 500, height: 600))
+        window.minSize = NSSize(width: 450, height: 400)
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        settingsWindow = window
+    }
+
     @objc private func quitApp() {
         NSApplication.shared.terminate(nil)
     }
