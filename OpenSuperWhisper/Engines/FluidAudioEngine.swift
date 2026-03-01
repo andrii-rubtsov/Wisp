@@ -83,14 +83,10 @@ class FluidAudioEngine: TranscriptionEngine {
         // Finalize
         onProgressUpdate?(0.95)
         
-        var processedText = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        if settings.shouldApplyAsianAutocorrect && !processedText.isEmpty {
-            processedText = AutocorrectWrapper.format(processedText)
-        }
-        
+        let processedText = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
+
         onProgressUpdate?(1.0)
-        
+
         return processedText.isEmpty ? "No speech detected in the audio" : processedText
     }
     

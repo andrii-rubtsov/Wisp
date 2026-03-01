@@ -39,7 +39,7 @@ else
 fi
 
 echo ""
-echo "🚀 Making release for OpenSuperWhisper v${NEW_VERSION}"
+echo "🚀 Making release for Wisp v${NEW_VERSION}"
 echo "   Code signing identity: ${CODE_SIGN_IDENTITY}"
 if [[ -n "$GITHUB_TOKEN" ]]; then
     echo "   GitHub release: ✅ Enabled"
@@ -66,7 +66,7 @@ echo "🧹 Cleaning previous builds..."
 rm -rf build
 rm -f Wisp.dmg
 rm -f Wisp.dmg.sha256
-rm -f OpenSuperWhisper.app.dSYM.zip
+rm -f Wisp.app.dSYM.zip
 
 # Use the existing notarize_app.sh script to build, sign, and notarize
 echo "🔨 Building, signing and notarizing with notarize_app.sh..."
@@ -94,8 +94,8 @@ if [[ ! -f "$DMG_PATH" ]]; then
 fi
 
 # Find and prepare dSYM
-DSYM_PATH="./build/Build/Products/Release/OpenSuperWhisper.app.dSYM"
-DSYM_ZIP_PATH="./OpenSuperWhisper.app.dSYM.zip"
+DSYM_PATH="./build/Build/Products/Release/Wisp.app.dSYM"
+DSYM_ZIP_PATH="./Wisp.app.dSYM.zip"
 
 if [[ -d "$DSYM_PATH" ]]; then
     echo "📦 Creating dSYM zip..."
@@ -198,7 +198,7 @@ if [[ -n "$GITHUB_TOKEN" ]]; then
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             -H "Content-Type: application/zip" \
-            "https://uploads.github.com/repos/andrii-rubtsov/Wisp/releases/${RELEASE_ID}/assets?name=OpenSuperWhisper.app.dSYM.zip" \
+            "https://uploads.github.com/repos/andrii-rubtsov/Wisp/releases/${RELEASE_ID}/assets?name=Wisp.app.dSYM.zip" \
             --data-binary @"${DSYM_ZIP_PATH}")
         
         # Check dSYM upload
@@ -233,7 +233,7 @@ echo "📁 Files created:"
 echo "   - Wisp.dmg"
 echo "   - Wisp.dmg.sha256"
 if [[ -f "$DSYM_ZIP_PATH" ]]; then
-    echo "   - OpenSuperWhisper.app.dSYM.zip"
+    echo "   - Wisp.app.dSYM.zip"
 fi
 echo ""
 echo "🍺 Homebrew cask update:"
@@ -251,11 +251,11 @@ cask "wisp" do
   depends_on macos: ">= :sonoma"
   depends_on arch: :arm64
 
-  app "OpenSuperWhisper.app"
+  app "Wisp.app"
 
   zap trash: [
-    "~/Library/Application Scripts/ru.starmel.OpenSuperWhisper",
-    "~/Library/Application Support/ru.starmel.OpenSuperWhisper",
+    "~/Library/Application Scripts/com.wisp.Wisp",
+    "~/Library/Application Support/com.wisp.Wisp",
   ]
 end
 EOF

@@ -15,18 +15,11 @@ jobs:
           submodules: recursive
 
       - name: Install dependencies
-        run: brew install cmake libomp rust
-
-      - name: Build autocorrect-swift
-        run: |
-          mkdir -p build
-          cargo build -p autocorrect-swift --release --target aarch64-apple-darwin --manifest-path=asian-autocorrect/Cargo.toml
-          cp ./asian-autocorrect/target/aarch64-apple-darwin/release/libautocorrect_swift.dylib ./build/libautocorrect_swift.dylib
-          install_name_tool -id "@rpath/libautocorrect_swift.dylib" ./build/libautocorrect_swift.dylib
-          codesign --force --sign - ./build/libautocorrect_swift.dylib
+        run: brew install cmake libomp
 
       - name: Copy libomp
         run: |
+          mkdir -p build
           cp /opt/homebrew/opt/libomp/lib/libomp.dylib ./build/libomp.dylib
           install_name_tool -id "@rpath/libomp.dylib" ./build/libomp.dylib
           codesign --force --sign - ./build/libomp.dylib
@@ -46,7 +39,7 @@ jobs:
       - name: Create DMG
         run: |
           hdiutil create -volname "Wisp" \
-            -srcfolder build/Build/Products/Release/OpenSuperWhisper.app \
+            -srcfolder build/Build/Products/Release/Wisp.app \
             -ov -format UDZO Wisp.dmg
 
       - name: Generate SHA256

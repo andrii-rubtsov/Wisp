@@ -21,7 +21,6 @@ Wisp is a macOS application that provides real-time audio transcription using th
 - Drag & drop audio files for transcription with queue processing
 - Microphone selection — switch between built-in, external, Bluetooth and iPhone (Apple Continuity) mics from the menu bar
 - Support for multiple languages with auto-detection
-- Asian language autocorrect ([autocorrect](https://github.com/huacnlee/autocorrect))
 
 ## Installation
 

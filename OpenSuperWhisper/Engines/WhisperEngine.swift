@@ -199,12 +199,7 @@ class WhisperEngine: TranscriptionEngine {
             .replacingOccurrences(of: "[BLANK_AUDIO]", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
         
-        var processedText = cleanedText
-        if settings.shouldApplyAsianAutocorrect && !cleanedText.isEmpty {
-            processedText = AutocorrectWrapper.format(cleanedText)
-        }
-        
-        return processedText.isEmpty ? "No speech detected in the audio" : processedText
+        return cleanedText.isEmpty ? "No speech detected in the audio" : cleanedText
     }
     
     func cancelTranscription() {
