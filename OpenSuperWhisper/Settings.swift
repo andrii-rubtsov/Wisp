@@ -1079,12 +1079,9 @@ struct SettingsView: View {
 
                         if hasBindings {
                             VStack(spacing: 8) {
-                                ForEach(Array(viewModel.shortcutBindings.enumerated()), id: \.element.id) { index, binding in
+                                ForEach($viewModel.shortcutBindings) { $binding in
                                     ShortcutBindingRow(
-                                        binding: Binding(
-                                            get: { viewModel.shortcutBindings[index] },
-                                            set: { viewModel.shortcutBindings[index] = $0 }
-                                        ),
+                                        binding: $binding,
                                         modelChoices: viewModel.availableModelChoices(for: binding.engine),
                                         onDelete: { viewModel.removeShortcutBinding(id: binding.id) }
                                     )
