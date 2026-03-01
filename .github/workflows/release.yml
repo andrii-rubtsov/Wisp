@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository (with submodules)
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: brew install cmake libomp rust
+
+      - name: Build autocorrect-swift
+        run: |
+          mkdir -p build
+          cargo build -p autocorrect-swift --release --target aarch64-apple-darwin --manifest-path=asian-autocorrect/Cargo.toml
+          cp ./asian-autocorrect/target/aarch64-apple-darwin/release/libautocorrect_swift.dylib ./build/libautocorrect_swift.dylib
+          install_name_tool -id "@rpath/libautocorrect_swift.dylib" ./build/libautocorrect_swift.dylib
+          codesign --force --sign - ./build/libautocorrect_swift.dylib
+
+      - name: Copy libomp
+        run: |
+          cp /opt/homebrew/opt/libomp/lib/libomp.dylib ./build/libomp.dylib
+          install_name_tool -id "@rpath/libomp.dylib" ./build/libomp.dylib
+          codesign --force --sign - ./build/libomp.dylib
+
+      - name: Configure libwhisper
+        run: cmake -G Xcode -B libwhisper/build -S libwhisper
+
+      - name: Build OpenSuperWhisper
+        run: |
+          xcodebuild -scheme OpenSuperWhisper -configuration Release -jobs 8 \
+            -derivedDataPath build -quiet -destination 'platform=macOS,arch=arm64' \
+            -skipPackagePluginValidation -skipMacroValidation \
+            -UseModernBuildSystem=YES -clonedSourcePackagesDirPath SourcePackages \
+            -skipUnavailableActions CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO build
+
+      - name: Create DMG
+        run: |
+          hdiutil create -volname "Wisp" \
+            -srcfolder build/Build/Products/Release/OpenSuperWhisper.app \
+            -ov -format UDZO OpenSuperWhisper.dmg
+
+      - name: Generate SHA256
+        run: shasum -a 256 OpenSuperWhisper.dmg > OpenSuperWhisper.dmg.sha256
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            OpenSuperWhisper.dmg
+            OpenSuperWhisper.dmg.sha256
+          generate_release_notes: true

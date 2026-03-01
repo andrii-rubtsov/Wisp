@@ -327,7 +327,7 @@ struct OnboardingView: View {
                         .fontWeight(.medium)
                         .foregroundColor(.secondary)
                     
-                    Text("OpenSuperWhisper")
+                    Text("Wisp")
                         .font(.system(size: 32, weight: .bold))
                         .foregroundStyle(
                             .white
