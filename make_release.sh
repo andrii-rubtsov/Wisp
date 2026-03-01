@@ -64,8 +64,8 @@ echo "✅ Updated MARKETING_VERSION to ${NEW_VERSION} and CURRENT_PROJECT_VERSIO
 # Clean previous builds
 echo "🧹 Cleaning previous builds..."
 rm -rf build
-rm -f OpenSuperWhisper.dmg
-rm -f OpenSuperWhisper.dmg.sha256
+rm -f Wisp.dmg
+rm -f Wisp.dmg.sha256
 rm -f OpenSuperWhisper.app.dSYM.zip
 
 # Use the existing notarize_app.sh script to build, sign, and notarize
@@ -85,7 +85,7 @@ fi
 
 echo "✅ Build and notarization successful!"
 
-DMG_PATH="./OpenSuperWhisper.dmg"
+DMG_PATH="./Wisp.dmg"
 
 # Verify DMG exists
 if [[ ! -f "$DMG_PATH" ]]; then
@@ -147,7 +147,7 @@ if [[ -n "$GITHUB_TOKEN" ]]; then
             "tag_name": "'${NEW_VERSION}'",
             "target_commitish": "master",
             "name": "Release '${NEW_VERSION}'",
-            "body": "## Wisp '${NEW_VERSION}'\n\nReal-time audio transcription for macOS using Whisper.\n\n## Installation\n\n### Homebrew (Recommended)\n```bash\nbrew update\nbrew install --cask wisp\n```\n\n### Manual Installation\n1. Download the `OpenSuperWhisper.dmg` file below\n2. Open the DMG and drag OpenSuperWhisper to Applications\n3. Launch the app and grant necessary permissions\n\n## Requirements\n- macOS 14.0 (Sonoma) or later\n- Apple Silicon (ARM64) Mac",
+            "body": "## Wisp '${NEW_VERSION}'\n\nReal-time audio transcription for macOS using Whisper.\n\n## Installation\n\n### Homebrew (Recommended)\n```bash\nbrew update\nbrew install --cask wisp\n```\n\n### Manual Installation\n1. Download the `Wisp.dmg` file below\n2. Open the DMG and drag Wisp to Applications\n3. Launch the app and grant necessary permissions\n\n## Requirements\n- macOS 14.0 (Sonoma) or later\n- Apple Silicon (ARM64) Mac",
             "draft": false,
             "prerelease": false,
             "generate_release_notes": false
@@ -171,7 +171,7 @@ if [[ -n "$GITHUB_TOKEN" ]]; then
         -H "Authorization: Bearer ${GITHUB_TOKEN}" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         -H "Content-Type: application/octet-stream" \
-        "https://uploads.github.com/repos/andrii-rubtsov/Wisp/releases/${RELEASE_ID}/assets?name=OpenSuperWhisper.dmg" \
+        "https://uploads.github.com/repos/andrii-rubtsov/Wisp/releases/${RELEASE_ID}/assets?name=Wisp.dmg" \
         --data-binary @"${DMG_PATH}")
     
     # Check if upload was successful
@@ -223,15 +223,15 @@ else
     echo "📋 Manual steps needed:"
     echo "1. Create GitHub release at:"
     echo "   https://github.com/andrii-rubtsov/Wisp/releases/new?tag=${NEW_VERSION}"
-    echo "2. Upload the DMG file: OpenSuperWhisper.dmg"
+    echo "2. Upload the DMG file: Wisp.dmg"
 fi
 
 echo ""
 echo "🎉 Release ${NEW_VERSION} is ready!"
 echo ""
 echo "📁 Files created:"
-echo "   - OpenSuperWhisper.dmg"
-echo "   - OpenSuperWhisper.dmg.sha256"
+echo "   - Wisp.dmg"
+echo "   - Wisp.dmg.sha256"
 if [[ -f "$DSYM_ZIP_PATH" ]]; then
     echo "   - OpenSuperWhisper.app.dSYM.zip"
 fi
@@ -243,7 +243,7 @@ cask "wisp" do
   version "${NEW_VERSION}"
   sha256 "${SHA256}"
 
-  url "https://github.com/andrii-rubtsov/Wisp/releases/download/#{version}/OpenSuperWhisper.dmg"
+  url "https://github.com/andrii-rubtsov/Wisp/releases/download/#{version}/Wisp.dmg"
   name "Wisp"
   desc "Whisper dictation/transcription app"
   homepage "https://github.com/andrii-rubtsov/Wisp"

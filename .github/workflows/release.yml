@@ -47,15 +47,15 @@ jobs:
         run: |
           hdiutil create -volname "Wisp" \
             -srcfolder build/Build/Products/Release/OpenSuperWhisper.app \
-            -ov -format UDZO OpenSuperWhisper.dmg
+            -ov -format UDZO Wisp.dmg
 
       - name: Generate SHA256
-        run: shasum -a 256 OpenSuperWhisper.dmg > OpenSuperWhisper.dmg.sha256
+        run: shasum -a 256 Wisp.dmg > Wisp.dmg.sha256
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            OpenSuperWhisper.dmg
-            OpenSuperWhisper.dmg.sha256
+            Wisp.dmg
+            Wisp.dmg.sha256
           generate_release_notes: true
