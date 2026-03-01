@@ -112,28 +112,16 @@ class IndicatorViewModel: ObservableObject {
                 do {
                     print("start decoding...")
                     let text = try await transcriptionService.transcribeAudio(url: tempURL, settings: Settings())
-                    
-                    // Create a new Recording instance
-                    let timestamp = Date()
-                    let fileName = "\(Int(timestamp.timeIntervalSince1970)).wav"
-                    let recordingId = UUID()
-                    let finalURL = Recording(
-                        id: recordingId,
-                        timestamp: timestamp,
-                        fileName: fileName,
-                        transcription: text,
-                        duration: 0,
-                        status: .completed,
-                        progress: 1.0,
-                        sourceFileURL: nil
-                    ).url
-                    
-                    // Move the temporary recording to final location
-                    try recorder.moveTemporaryRecording(from: tempURL, to: finalURL)
-                    
-                    // Save the recording to store
-                    await MainActor.run {
-                        self.recordingStore.addRecording(Recording(
+
+                    if TranscriptionFilter.isEmptyOrHallucinated(text) {
+                        print("Transcription is empty/hallucinated, discarding: \(text)")
+                        try? FileManager.default.removeItem(at: tempURL)
+                    } else {
+                        // Create a new Recording instance
+                        let timestamp = Date()
+                        let fileName = "\(Int(timestamp.timeIntervalSince1970)).wav"
+                        let recordingId = UUID()
+                        let finalURL = Recording(
                             id: recordingId,
                             timestamp: timestamp,
                             fileName: fileName,
@@ -142,11 +130,28 @@ class IndicatorViewModel: ObservableObject {
                             status: .completed,
                             progress: 1.0,
                             sourceFileURL: nil
-                        ))
+                        ).url
+
+                        // Move the temporary recording to final location
+                        try recorder.moveTemporaryRecording(from: tempURL, to: finalURL)
+
+                        // Save the recording to store
+                        await MainActor.run {
+                            self.recordingStore.addRecording(Recording(
+                                id: recordingId,
+                                timestamp: timestamp,
+                                fileName: fileName,
+                                transcription: text,
+                                duration: 0,
+                                status: .completed,
+                                progress: 1.0,
+                                sourceFileURL: nil
+                            ))
+                        }
+
+                        insertText(text)
+                        print("Transcription result: \(text)")
                     }
-                    
-                    insertText(text)
-                    print("Transcription result: \(text)")
                 } catch {
                     print("Error transcribing audio: \(error)")
                     try? FileManager.default.removeItem(at: tempURL)
