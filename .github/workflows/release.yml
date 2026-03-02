@@ -12,14 +12,13 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - name: Checkout repository (with submodules)
+      - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          submodules: recursive
           fetch-depth: 0
 
       - name: Install dependencies
-        run: brew install cmake libomp
+        run: brew install libomp
 
       - name: Copy libomp
         run: |
@@ -27,9 +26,6 @@ jobs:
           cp /opt/homebrew/opt/libomp/lib/libomp.dylib ./build/libomp.dylib
           install_name_tool -id "@rpath/libomp.dylib" ./build/libomp.dylib
           codesign --force --sign - ./build/libomp.dylib
-
-      - name: Configure libwhisper
-        run: cmake -G Xcode -B libwhisper/build -S libwhisper
 
       - name: Compute version
         id: version_pre

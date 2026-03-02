@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import WhisperCpp
 
 public struct WhisperTimings {
     public let sampleMs: Float

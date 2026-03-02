@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import WhisperCpp
 import CoreAudioTypes
 
 private class ProgressContext {

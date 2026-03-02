@@ -19,12 +19,6 @@
 		36EBCD229289171650A4E267 /* (null) in Sources */ = {isa = PBXBuildFile; };
 		36EBCD57CC6B8E2D3FC51EF5 /* (null) in Sources */ = {isa = PBXBuildFile; };
 		36EBCE4EA0197EA30ECFA1F7 /* (null) in Sources */ = {isa = PBXBuildFile; };
-		840156D02D79ED9900FB5FFE /* libwhisper.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 840156CF2D79ED9900FB5FFE /* libwhisper.a */; };
-		840156D12D79EDA900FB5FFE /* libggml.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 840156C52D79ED9900FB5FFE /* libggml.a */; };
-		840156D22D79EDB500FB5FFE /* libggml-base.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 840156C72D79ED9900FB5FFE /* libggml-base.a */; };
-		840156D32D79EDBA00FB5FFE /* libggml-blas.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 840156C92D79ED9900FB5FFE /* libggml-blas.a */; };
-		840156D42D79EDBA00FB5FFE /* libggml-cpu.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 840156CB2D79ED9900FB5FFE /* libggml-cpu.a */; };
-		840156D52D79EDBA00FB5FFE /* libggml-metal.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 840156CD2D79ED9900FB5FFE /* libggml-metal.a */; };
 		CE0EAD6E2D56ACA80067FDEE /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = CE0EAD6D2D56ACA80067FDEE /* GRDB */; };
 		CE84DF6E2D55777800C54EA6 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CE84DF6D2D55777800C54EA6 /* libc++.tbd */; };
 		CE84DF712D55778000C54EA6 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE84DF6F2D55778000C54EA6 /* Metal.framework */; };
@@ -32,6 +26,7 @@
 		CE84DF762D5577D200C54EA6 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE84DF752D5577D200C54EA6 /* Accelerate.framework */; };
 		CE84E17D2D56550B00C54EA6 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = CE84E17C2D56550B00C54EA6 /* KeyboardShortcuts */; };
 		CEAC00082D82F50000000000 /* libomp.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = CEAC00072D82F40000000000 /* libomp.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		AA00000000000003WHISPER /* WhisperCpp in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000002WHISPER /* WhisperCpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -48,48 +43,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXContainerItemProxy section */
-		840156C42D79ED9900FB5FFE /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 840156402D79E87600FB5FFE /* libwhisper.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = B8CFD18D1CA64DB288EF4CAB;
-			remoteInfo = ggml;
-		};
-		840156C62D79ED9900FB5FFE /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 840156402D79E87600FB5FFE /* libwhisper.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = E9432130077149BEA5672826;
-			remoteInfo = "ggml-base";
-		};
-		840156C82D79ED9900FB5FFE /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 840156402D79E87600FB5FFE /* libwhisper.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = E8BC775FB8B44B4FBAD88B47;
-			remoteInfo = "ggml-blas";
-		};
-		840156CA2D79ED9900FB5FFE /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 840156402D79E87600FB5FFE /* libwhisper.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 200441F97DEC455CBF966F1F;
-			remoteInfo = "ggml-cpu";
-		};
-		840156CC2D79ED9900FB5FFE /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 840156402D79E87600FB5FFE /* libwhisper.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 8F906E52C874462B9841D673;
-			remoteInfo = "ggml-metal";
-		};
-		840156CE2D79ED9900FB5FFE /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 840156402D79E87600FB5FFE /* libwhisper.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 30B2BC75387D4C73A3820913;
-			remoteInfo = whisper;
-		};
 		CE57B03A2D52C7BC00929AF3 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = CE57B0202D52C7BB00929AF3 /* Project object */;
@@ -120,7 +73,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		840156402D79E87600FB5FFE /* libwhisper.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = libwhisper.xcodeproj; path = libwhisper/build/libwhisper.xcodeproj; sourceTree = "<group>"; };
 		840156592D79EA1A00FB5FFE /* Bridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bridge.h; sourceTree = "<group>"; };
 		CE57B0282D52C7BB00929AF3 /* Wisp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wisp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE57B0392D52C7BC00929AF3 /* WispTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WispTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -200,18 +152,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				840156D52D79EDBA00FB5FFE /* libggml-metal.a in Frameworks */,
-				840156D42D79EDBA00FB5FFE /* libggml-cpu.a in Frameworks */,
-				840156D32D79EDBA00FB5FFE /* libggml-blas.a in Frameworks */,
 				CE84DF762D5577D200C54EA6 /* Accelerate.framework in Frameworks */,
-				840156D22D79EDB500FB5FFE /* libggml-base.a in Frameworks */,
 				CE84DF712D55778000C54EA6 /* Metal.framework in Frameworks */,
 				CE0EAD6E2D56ACA80067FDEE /* GRDB in Frameworks */,
 				CE84DF722D55778000C54EA6 /* MetalKit.framework in Frameworks */,
-				840156D02D79ED9900FB5FFE /* libwhisper.a in Frameworks */,
 				CE84DF6E2D55777800C54EA6 /* libc++.tbd in Frameworks */,
-				840156D12D79EDA900FB5FFE /* libggml.a in Frameworks */,
 				CE84E17D2D56550B00C54EA6 /* KeyboardShortcuts in Frameworks */,
+				AA00000000000003WHISPER /* WhisperCpp in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -232,19 +179,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		840156412D79E87600FB5FFE /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				840156C52D79ED9900FB5FFE /* libggml.a */,
-				840156C72D79ED9900FB5FFE /* libggml-base.a */,
-				840156C92D79ED9900FB5FFE /* libggml-blas.a */,
-				840156CB2D79ED9900FB5FFE /* libggml-cpu.a */,
-				840156CD2D79ED9900FB5FFE /* libggml-metal.a */,
-				840156CF2D79ED9900FB5FFE /* libwhisper.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		CE37B60E2D54F274009D6564 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -272,7 +206,6 @@
 			isa = PBXGroup;
 			children = (
 				840156592D79EA1A00FB5FFE /* Bridge.h */,
-				840156402D79E87600FB5FFE /* libwhisper.xcodeproj */,
 				CE57B02A2D52C7BB00929AF3 /* Wisp */,
 				CE57B03C2D52C7BC00929AF3 /* WispTests */,
 				CE57B0462D52C7BC00929AF3 /* WispUITests */,
@@ -505,6 +438,7 @@
 				CE84E17B2D56550B00C54EA6 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 				CE0EAD6C2D56ACA80067FDEE /* XCRemoteSwiftPackageReference "GRDB.swift" */,
 				CE84E17D2D56550B00C54EA7 /* XCRemoteSwiftPackageReference "FluidAudio" */,
+				AA00000000000001WHISPER /* XCRemoteSwiftPackageReference "whisper-cpp-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CE57B0292D52C7BB00929AF3 /* Products */;
@@ -525,48 +459,6 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		840156C52D79ED9900FB5FFE /* libggml.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = libggml.a;
-			remoteRef = 840156C42D79ED9900FB5FFE /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		840156C72D79ED9900FB5FFE /* libggml-base.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = "libggml-base.a";
-			remoteRef = 840156C62D79ED9900FB5FFE /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		840156C92D79ED9900FB5FFE /* libggml-blas.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = "libggml-blas.a";
-			remoteRef = 840156C82D79ED9900FB5FFE /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		840156CB2D79ED9900FB5FFE /* libggml-cpu.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = "libggml-cpu.a";
-			remoteRef = 840156CA2D79ED9900FB5FFE /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		840156CD2D79ED9900FB5FFE /* libggml-metal.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = "libggml-metal.a";
-			remoteRef = 840156CC2D79ED9900FB5FFE /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		840156CF2D79ED9900FB5FFE /* libwhisper.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = libwhisper.a;
-			remoteRef = 840156CE2D79ED9900FB5FFE /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
@@ -793,7 +685,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/libwhisper/**",
 				);
 				INFOPLIST_FILE = "Wisp/Wisp-Info.plist";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
@@ -855,7 +746,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/libwhisper/**",
 				);
 				INFOPLIST_FILE = "Wisp/Wisp-Info.plist";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
@@ -902,7 +792,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/libwhisper/**",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
 				MARKETING_VERSION = 1.0.6;
@@ -926,7 +815,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/libwhisper/**",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
 				MARKETING_VERSION = 1.0.6;
@@ -1039,6 +927,15 @@
 				minimumVersion = 0.7.9;
 			};
 		};
+
+		AA00000000000001WHISPER /* XCRemoteSwiftPackageReference "whisper-cpp-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/andrii-rubtsov/whisper-cpp-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.7.5;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1056,6 +953,12 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CE84E17D2D56550B00C54EA7 /* XCRemoteSwiftPackageReference "FluidAudio" */;
 			productName = FluidAudio;
+		};
+
+		AA00000000000002WHISPER /* WhisperCpp */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA00000000000001WHISPER /* XCRemoteSwiftPackageReference "whisper-cpp-swift" */;
+			productName = WhisperCpp;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import WhisperCpp
 
 public struct WhisperFullParams {
     public var strategy: WhisperSamplingStrategy = .greedy

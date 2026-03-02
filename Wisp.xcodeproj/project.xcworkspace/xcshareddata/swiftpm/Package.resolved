@@ -1,5 +1,5 @@
 {
-  "originHash" : "3b52b70f493c6c228eeb95f6561d91dd41131a6d3eba456cfebe020d41814380",
+  "originHash" : "946fceaf6b592ae0dc7b4a0cace7110a8246cc983612f6fdd620c5821f29426f",
   "pins" : [
     {
       "identity" : "fluidaudio",
@@ -71,6 +71,15 @@
       "state" : {
         "revision" : "f3d5cbfa653dd248ae8c92313453d5fdcfdf049e",
         "version" : "1.1.8"
+      }
+    },
+    {
+      "identity" : "whisper-cpp-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/andrii-rubtsov/whisper-cpp-swift.git",
+      "state" : {
+        "revision" : "ba81f5db2dc7a805421bb31910c799c0f15f4d0a",
+        "version" : "1.7.5"
       }
     },
     {

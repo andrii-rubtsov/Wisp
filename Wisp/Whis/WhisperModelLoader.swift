@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import WhisperCpp
 
 public struct WhisperModelLoader {
     public var context: UnsafeMutableRawPointer?

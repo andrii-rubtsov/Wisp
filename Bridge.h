@@ -5,4 +5,4 @@
 //  Created by user on 07.02.2025.
 //
 
-#include "whisper.h"
+// whisper.h is now provided by the WhisperCpp Swift package module

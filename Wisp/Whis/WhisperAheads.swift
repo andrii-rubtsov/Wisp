@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import WhisperCpp
 
 public struct WhisperAheads {
     public let heads: [WhisperAhead]

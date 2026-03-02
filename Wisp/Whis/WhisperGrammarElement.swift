@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import WhisperCpp
 
 public struct WhisperGrammarElement {
     public let type: WhisperGrammarElementType

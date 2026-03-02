@@ -51,10 +51,11 @@ Download the DMG from the [Releases page](https://github.com/andrii-rubtsov/Wisp
 ```shell
 git clone git@github.com:andrii-rubtsov/Wisp.git
 cd Wisp
-git submodule update --init --recursive
-brew install cmake libomp
+brew install libomp
 ./run.sh build
 ```
+
+Whisper.cpp is provided as a pre-built XCFramework via the [whisper-cpp-swift](https://github.com/andrii-rubtsov/whisper-cpp-swift) Swift package — no cmake or submodule setup required.
 
 If you run into issues, see `.github/workflows/release.yml` — the CI workflow builds and releases the app automatically on every push to master.
 

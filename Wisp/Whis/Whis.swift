@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import WhisperCpp
 
 // MARK: - C Type Wrappers
 
