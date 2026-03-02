@@ -1,12 +1,7 @@
 # Xcode
-## User settings
 xcuserdata/
-
-## Xcode 8 and earlier
 *.xcscmblueprint
 *.xccheckout
-
-## compatibility with Xcode 3 and earlier
 *.moved-aside
 *.pbxuser
 !default.pbxuser
@@ -16,8 +11,6 @@ xcuserdata/
 !default.mode2v3
 *.perspectivev3
 !default.perspectivev3
-
-## Xcode Patch
 *.xcodeproj/*
 !*.xcodeproj/project.pbxproj
 !*.xcodeproj/xcshareddata/
@@ -25,100 +18,41 @@ xcuserdata/
 !*.xcworkspace/contents.xcworkspacedata
 /*.gcno
 
-## App packaging
+# App packaging
 *.ipa
 *.dSYM.zip
 *.dSYM
+
+# Swift Package Manager
+.swiftpm/
+.build/
+/SourcePackages/
+SourcePackages/
+/Package.resolved
+
+# Build
+build/
+*.profraw
 
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
-
-# Icon must end with two \r
+._*
 Icon
 
-# Thumbnails
-._*
-
-# Files that might appear in the root of a volume
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-
-# Python
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Distribution / packaging
-dist/
-build/
-*.egg-info/
-
-# Virtual environments
-venv/
-env/
-ENV/
-.env
-.venv
-
-# PyCharm
-.idea/
-
-# VS Code
-.vscode/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Local development settings
-*.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Testing
-.coverage
-htmlcov/
-.pytest_cache/
-.tox/
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-tools/
-/SourcePackages
-SourcePackages
-.build
-default.profraw
-
-# Fastlane
-fastlane/.env
-fastlane/report.xml
-fastlane/Error*.png
-fastlane/Preview.html
-fastlane/screenshots
-fastlane/test_output
-fastlane/build
-default.profraw
-*.profraw
+# Release artifacts
 *.dmg
-.cursorrules
 Wisp.dmg.sha256
+
+# Tools
+.claude/
+.cursorrules
+.idea/
+.vscode/
+tools/
+
+# Local config
 dev_config.json
+*.env
+.env.*
