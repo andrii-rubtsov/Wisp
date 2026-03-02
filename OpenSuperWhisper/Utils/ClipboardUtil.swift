@@ -17,8 +17,8 @@ class ClipboardUtil {
         // Simulate Cmd+V using layout-aware keycode resolution
         simulatePaste()
         
-        // Add a small delay to ensure paste operation completes
-        Thread.sleep(forTimeInterval: 0.1)
+        // Brief delay to ensure paste operation completes
+        Thread.sleep(forTimeInterval: 0.05)
         
         // Restore original contents
         if let contents = savedContents {
@@ -162,11 +162,6 @@ class ClipboardUtil {
                 pasteboard.setPropertyList(urls, forType: type)
             }
         }
-    }
-    
-    @available(*, deprecated, renamed: "insertText")
-    static func insertTextUsingPasteboard(_ text: String) {
-        insertText(text)
     }
     
     // MARK: - Testing Helpers

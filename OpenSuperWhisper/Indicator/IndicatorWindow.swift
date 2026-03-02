@@ -111,7 +111,7 @@ class IndicatorViewModel: ObservableObject {
                 
                 do {
                     print("start decoding...")
-                    let text = try await transcriptionService.transcribeAudio(url: tempURL, settings: Settings())
+                    let text = try await transcriptionService.transcribeAudio(url: tempURL)
 
                     if TranscriptionFilter.isEmptyOrHallucinated(text) {
                         print("Transcription is empty/hallucinated, discarding: \(text)")

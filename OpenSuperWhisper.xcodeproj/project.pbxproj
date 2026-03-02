@@ -161,8 +161,6 @@
 		CE84DF702D55778000C54EA6 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		CE84DF732D5577A700C54EA6 /* libggml-blas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "libggml-blas.a"; sourceTree = "<group>"; };
 		CE84DF752D5577D200C54EA6 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
-		CE84DF772D55789800C54EA6 /* ggml-tiny.en.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = "ggml-tiny.en.bin"; sourceTree = "<group>"; };
-		CE84DF792D5578BE00C54EA6 /* jfk.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = jfk.wav; sourceTree = "<group>"; };
 		CEAC00072D82F40000000000 /* libomp.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libomp.dylib; path = build/libomp.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -280,8 +278,6 @@
 				CE57B0462D52C7BC00929AF3 /* OpenSuperWhisperUITests */,
 				CE37B60E2D54F274009D6564 /* Frameworks */,
 				CE57B0292D52C7BB00929AF3 /* Products */,
-				CE84DF772D55789800C54EA6 /* ggml-tiny.en.bin */,
-				CE84DF792D5578BE00C54EA6 /* jfk.wav */,
 				CE9DA5672EA8DA4600EB417E /* Recovered References */,
 			);
 			sourceTree = "<group>";

@@ -77,7 +77,7 @@ class TranscriptionService: ObservableObject {
         }
     }
     
-    func transcribeAudio(url: URL, settings: Settings) async throws -> String {
+    func transcribeAudio(url: URL) async throws -> String {
         await MainActor.run {
             self.progress = 0.0
             self.conversionProgress = 0.0
@@ -143,7 +143,7 @@ class TranscriptionService: ObservableObject {
                 throw CancellationError()
             }
             
-            let result = try await engine.transcribeAudio(url: url, settings: settings)
+            let result = try await engine.transcribeAudio(url: url)
             
             try Task.checkCancellation()
             
@@ -175,13 +175,27 @@ class TranscriptionService: ObservableObject {
             await MainActor.run {
                 self.isCancelled = true
             }
-            throw TranscriptionError.processingFailed
+            throw TranscriptionError.processingFailed()
         }
     }
 }
 
-enum TranscriptionError: Error {
+enum TranscriptionError: LocalizedError {
     case contextInitializationFailed
     case audioConversionFailed
-    case processingFailed
+    case processingFailed(Error? = nil)
+
+    var errorDescription: String? {
+        switch self {
+        case .contextInitializationFailed:
+            return "Failed to initialize transcription context"
+        case .audioConversionFailed:
+            return "Failed to convert audio to PCM format"
+        case .processingFailed(let underlying):
+            if let underlying {
+                return "Transcription processing failed: \(underlying.localizedDescription)"
+            }
+            return "Transcription processing failed"
+        }
+    }
 }

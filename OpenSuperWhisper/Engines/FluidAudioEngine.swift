@@ -29,7 +29,7 @@ class FluidAudioEngine: TranscriptionEngine {
         asrModels = models
     }
     
-    func transcribeAudio(url: URL, settings: Settings) async throws -> String {
+    func transcribeAudio(url: URL) async throws -> String {
         guard let asrManager = asrManager else {
             throw TranscriptionError.contextInitializationFailed
         }
@@ -64,7 +64,7 @@ class FluidAudioEngine: TranscriptionEngine {
                     }
                 }
             } catch {
-                // Stream finished or error
+                print("FluidAudio progress stream error: \(error)")
             }
         }
         

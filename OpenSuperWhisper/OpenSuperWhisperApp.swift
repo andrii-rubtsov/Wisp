@@ -42,7 +42,6 @@ struct OpenSuperWhisperApp: App {
         _ = PermissionsManager.shared
         _ = ShortcutManager.shared
         _ = MicrophoneService.shared
-        WhisperModelManager.shared.ensureDefaultModelPresent()
     }
 }
 

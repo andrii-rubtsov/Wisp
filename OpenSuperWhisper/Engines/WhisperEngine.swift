@@ -76,55 +76,56 @@ class WhisperEngine: TranscriptionEngine {
         }
     }
     
-    func transcribeAudio(url: URL, settings: Settings) async throws -> String {
+    func transcribeAudio(url: URL) async throws -> String {
         guard let context = context else {
             throw TranscriptionError.contextInitializationFailed
         }
-        
+
         isCancelled = false
-        
+
         if abortFlag != nil {
             abortFlag?.deallocate()
         }
         abortFlag = UnsafeMutablePointer<Bool>.allocate(capacity: 1)
         abortFlag?.initialize(to: false)
-        
+
         // Setup progress context for callback
         progressContext = ProgressContext()
         progressContext?.onProgress = onProgressUpdate
-        
+
         defer {
             abortFlag?.deallocate()
             abortFlag = nil
             progressContext = nil
         }
-        
+
         // Notify conversion start (0-10% is conversion phase)
         onProgressUpdate?(0.05)
-        
+
         guard let samples = try await convertAudioToPCM(fileURL: url) else {
             throw TranscriptionError.audioConversionFailed
         }
-        
+
         // Conversion done, now processing
         onProgressUpdate?(0.10)
-        
+
         try Task.checkCancellation()
-        
+
+        let prefs = AppPreferences.shared
         let nThreads = max(2, min(ProcessInfo.processInfo.activeProcessorCount, 8))
-        
+
         var params = WhisperFullParams()
-        params.strategy = settings.useBeamSearch ? .beamSearch : .greedy
+        params.strategy = prefs.useBeamSearch ? .beamSearch : .greedy
         params.nThreads = Int32(nThreads)
-        params.noTimestamps = !settings.showTimestamps
-        params.suppressBlank = settings.suppressBlankAudio
-        params.translate = settings.translateToEnglish
-        let isAutoDetect = settings.selectedLanguage == "auto"
-        params.language = isAutoDetect ? nil : settings.selectedLanguage
+        params.noTimestamps = !prefs.showTimestamps
+        params.suppressBlank = prefs.suppressBlankAudio
+        params.translate = prefs.translateToEnglish
+        let isAutoDetect = prefs.whisperLanguage == "auto"
+        params.language = isAutoDetect ? nil : prefs.whisperLanguage
         params.detectLanguage = false // means that it only detects the language and does not process the transcription
-        params.temperature = Float(settings.temperature)
-        params.noSpeechThold = Float(settings.noSpeechThreshold)
-        params.initialPrompt = settings.initialPrompt.isEmpty ? nil : settings.initialPrompt
+        params.temperature = Float(prefs.temperature)
+        params.noSpeechThold = Float(prefs.noSpeechThreshold)
+        params.initialPrompt = prefs.initialPrompt.isEmpty ? nil : prefs.initialPrompt
         
         typealias GGMLAbortCallback = @convention(c) (UnsafeMutableRawPointer?) -> Bool
         let abortCallback: GGMLAbortCallback = { userData in
@@ -154,8 +155,8 @@ class WhisperEngine: TranscriptionEngine {
         params.progressCallback = progressCallback
         params.progressCallbackUserData = progressContextPtr
         
-        if settings.useBeamSearch {
-            params.beamSearchBeamSize = Int32(settings.beamSize)
+        if prefs.useBeamSearch {
+            params.beamSearchBeamSize = Int32(prefs.beamSize)
         }
         
         params.printRealtime = true
@@ -171,7 +172,7 @@ class WhisperEngine: TranscriptionEngine {
         try Task.checkCancellation()
         
         guard context.full(samples: samples, params: &cParams) else {
-            throw TranscriptionError.processingFailed
+            throw TranscriptionError.processingFailed()
         }
         
         try Task.checkCancellation()
@@ -186,7 +187,7 @@ class WhisperEngine: TranscriptionEngine {
             
             guard let segmentText = context.fullGetSegmentText(iSegment: i) else { continue }
             
-            if settings.showTimestamps {
+            if prefs.showTimestamps {
                 let t0 = context.fullGetSegmentT0(iSegment: i)
                 let t1 = context.fullGetSegmentT1(iSegment: i)
                 text += String(format: "[%.1f->%.1f] ", Float(t0) / 100.0, Float(t1) / 100.0)
@@ -430,8 +431,7 @@ class WhisperEngine: TranscriptionEngine {
             converter.convert(to: chunkOutputBuffer, error: &error, withInputFrom: inputBlock)
             
             if let error = error {
-                print("Conversion error: \(error)")
-                break
+                throw error
             }
             
             appendMixedSamples(from: chunkOutputBuffer, to: &result)

@@ -518,30 +518,6 @@ struct SettingsDownloadableModels {
     ]
 }
 
-struct Settings {
-    var selectedLanguage: String
-    var translateToEnglish: Bool
-    var suppressBlankAudio: Bool
-    var showTimestamps: Bool
-    var temperature: Double
-    var noSpeechThreshold: Double
-    var initialPrompt: String
-    var useBeamSearch: Bool
-    var beamSize: Int
-    init() {
-        let prefs = AppPreferences.shared
-        self.selectedLanguage = prefs.whisperLanguage
-        self.translateToEnglish = prefs.translateToEnglish
-        self.suppressBlankAudio = prefs.suppressBlankAudio
-        self.showTimestamps = prefs.showTimestamps
-        self.temperature = prefs.temperature
-        self.noSpeechThreshold = prefs.noSpeechThreshold
-        self.initialPrompt = prefs.initialPrompt
-        self.useBeamSearch = prefs.useBeamSearch
-        self.beamSize = prefs.beamSize
-    }
-}
-
 // MARK: - Settings View
 
 struct SettingsView: View {
