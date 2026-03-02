@@ -15,9 +15,10 @@ Wisp is a macOS menu-bar app for speech-to-text transcription. Press a shortcut,
 ## Features
 
 - **Two transcription engines** — choose per-shortcut:
-  - [Whisper](https://github.com/ggerganov/whisper.cpp) (whisper.cpp) — best quality (~2.5% WER), 99 languages, supports initial prompt for context
-  - [Parakeet](https://github.com/FluidInference/FluidAudio) (NVIDIA NeMo) — lightning-fast (~6% WER), 25 European languages
+  - [Whisper](https://github.com/ggerganov/whisper.cpp) (whisper.cpp) — **recommended**, best quality (~2.5% WER), 99 languages, supports initial prompt
+  - [Parakeet](https://github.com/FluidInference/FluidAudio) (NVIDIA NeMo) — lightning-fast (~6% WER), 25 European languages, no prompt support
 - **Multiple shortcut bindings** — assign different key combos to different engine/model combinations (up to 5)
+- **Initial Prompt** (Whisper only) — not a system prompt; provide a sample of expected output text to guide style, spelling, and formatting (e.g. proper nouns, punctuation, casing)
 - **Drag & drop** audio files for transcription with queue processing
 - **Microphone selection** — switch between built-in, external, Bluetooth and iPhone (Continuity) mics from the menu bar
 - **Recording indicator** — floating window near your cursor shows recording state
@@ -28,6 +29,15 @@ Wisp is a macOS menu-bar app for speech-to-text transcription. Press a shortcut,
 - **Hallucination filter** — automatically discards phantom outputs from silence ("Thank you", "Subscribe", etc.)
 - **Multiple language support** with auto-detection and translate-to-English option
 - **Model downloads** — download Whisper and Parakeet models directly from the app
+
+### Recommended setup
+
+Use two shortcut bindings — one for accuracy, one for speed:
+
+| Shortcut | Engine | Model | Use case |
+|---|---|---|---|
+| e.g. `Cmd+Shift+1` | Whisper | Large V3 Turbo Q5 | Best accuracy, longer recordings, multilingual |
+| e.g. `Cmd+Shift+2` | Parakeet | Multilingual | Quick notes, instant transcription |
 
 ## Installation
 

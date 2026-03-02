@@ -473,7 +473,7 @@ struct SettingsDownloadableModels {
             isDownloaded: false,
             url: URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin?download=true")!,
             size: 1624,
-            description: "Best quality (~2.5% WER). 99 languages. Supports initial prompt."
+            description: "Recommended. Best quality (~2.5% WER). 99 languages. Supports initial prompt."
         ),
         SettingsDownloadableModel(
             name: "Turbo V3 medium",
@@ -1154,7 +1154,21 @@ struct ShortcutBindingRow: View {
                             RoundedRectangle(cornerRadius: 4)
                                 .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                         )
+                    Text("Not a system prompt. Provide a sample of expected output text to guide style, spelling, and formatting (e.g. proper nouns, punctuation, casing).")
+                        .font(.caption2)
+                        .foregroundColor(.secondary.opacity(0.7))
                 }
+                .padding(.top, 2)
+            } else {
+                HStack(spacing: 4) {
+                    Image(systemName: "info.circle")
+                        .font(.caption2)
+                        .foregroundColor(.secondary.opacity(0.6))
+                    Text("Initial Prompt is not supported by Parakeet.")
+                        .font(.caption2)
+                        .foregroundColor(.secondary.opacity(0.6))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 2)
             }
         }
@@ -1229,7 +1243,7 @@ struct OnboardingUnifiedModels {
         OnboardingUnifiedModel(
             name: "Whisper V3 Large",
             isDownloaded: false,
-            description: "Best quality (~2.5% WER). 99 languages. Supports initial prompt.",
+            description: "Recommended. Best quality (~2.5% WER). 99 languages. Supports initial prompt.",
             type: .whisper(
                 url: URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin?download=true")!,
                 size: 1624
