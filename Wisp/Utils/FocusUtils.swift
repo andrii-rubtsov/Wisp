@@ -5,13 +5,8 @@
 //  Created by user on 07.02.2025.
 //
 
-import AppKit
 import ApplicationServices
-import Carbon
-import Cocoa
-import Foundation
-import KeyboardShortcuts
-import SwiftUI
+import AppKit
 
 class FocusUtils {
     
@@ -40,7 +35,8 @@ class FocusUtils {
             return nil
         }
         
-        let element = focusedElementCF as! AXUIElement
+        // CFTypeRef from AX API is guaranteed to be AXUIElement here
+        let element = focusedElementCF as! AXUIElement // swiftlint:disable:this force_cast
         // Получаем выделенный текстовый диапазон у фокусированного элемента
         var selectedTextRange: AnyObject?
         let errorRange = AXUIElementCopyAttributeValue(element,

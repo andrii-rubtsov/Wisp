@@ -1,10 +1,5 @@
 import AppKit
-import ApplicationServices
-import Carbon
-import Cocoa
-import Foundation
 import KeyboardShortcuts
-import SwiftUI
 
 extension KeyboardShortcuts.Name {
     static let escape = Self("escape", default: .init(.escape))

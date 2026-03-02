@@ -1,5 +1,4 @@
-import Cocoa
-import ApplicationServices
+import AppKit
 import Carbon
 
 class ClipboardUtil {

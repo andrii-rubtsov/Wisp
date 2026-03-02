@@ -34,10 +34,11 @@ struct Recording: Identifiable, Codable, FetchableRecord, PersistableRecord, Equ
     }
 
     static var recordingsDirectory: URL {
-        let applicationSupport = FileManager.default.urls(
-            for: .applicationSupportDirectory, in: .userDomainMask
-        ).first!
-        let appDirectory = applicationSupport.appendingPathComponent(Bundle.main.bundleIdentifier!)
+        guard let applicationSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first,
+              let bundleId = Bundle.main.bundleIdentifier else {
+            fatalError("Cannot determine Application Support directory or bundle identifier")
+        }
+        let appDirectory = applicationSupport.appendingPathComponent(bundleId)
         return appDirectory.appendingPathComponent("recordings")
     }
 
@@ -76,10 +77,11 @@ class RecordingStore: ObservableObject {
     private let dbQueue: DatabaseQueue
 
     private init() {
-        let applicationSupport = FileManager.default.urls(
-            for: .applicationSupportDirectory, in: .userDomainMask
-        ).first!
-        let appDirectory = applicationSupport.appendingPathComponent(Bundle.main.bundleIdentifier!)
+        guard let applicationSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first,
+              let bundleId = Bundle.main.bundleIdentifier else {
+            fatalError("Cannot determine Application Support directory or bundle identifier")
+        }
+        let appDirectory = applicationSupport.appendingPathComponent(bundleId)
         let dbPath = appDirectory.appendingPathComponent("recordings.sqlite")
 
         print("Database path: \(dbPath.path)")

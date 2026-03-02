@@ -44,9 +44,11 @@ class WhisperModelManager {
     private let downloadTasksLock = NSLock()
     
     var modelsDirectory: URL {
-        let applicationSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let modelsDirectory = applicationSupport.appendingPathComponent(Bundle.main.bundleIdentifier!).appendingPathComponent(modelsDirectoryName)
-        return modelsDirectory
+        guard let applicationSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first,
+              let bundleId = Bundle.main.bundleIdentifier else {
+            fatalError("Cannot determine Application Support directory or bundle identifier")
+        }
+        return applicationSupport.appendingPathComponent(bundleId).appendingPathComponent(modelsDirectoryName)
     }
     
     private init() {

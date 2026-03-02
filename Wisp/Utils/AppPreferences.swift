@@ -23,16 +23,7 @@ struct OptionalUserDefault<T> {
 
 final class AppPreferences {
     static let shared = AppPreferences()
-    private init() {
-        migrateOldPreferences()
-    }
-    
-    private func migrateOldPreferences() {
-        if let oldPath = UserDefaults.standard.string(forKey: "selectedModelPath"),
-           UserDefaults.standard.string(forKey: "selectedWhisperModelPath") == nil {
-            UserDefaults.standard.set(oldPath, forKey: "selectedWhisperModelPath")
-        }
-    }
+    private init() {}
     
     // Engine settings
     @UserDefault(key: "selectedEngine", defaultValue: "fluidaudio")
