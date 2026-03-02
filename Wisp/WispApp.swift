@@ -1,6 +1,6 @@
 //
-//  OpenSuperWhisperApp.swift
-//  OpenSuperWhisper
+//  WispApp.swift
+//  Wisp
 //
 //  Created by user on 05.02.2025.
 //
@@ -12,7 +12,7 @@ import Combine
 import UniformTypeIdentifiers
 
 @main
-struct OpenSuperWhisperApp: App {
+struct WispApp: App {
     @StateObject private var appState = AppState()
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
@@ -45,7 +45,7 @@ struct OpenSuperWhisperApp: App {
     }
 }
 
-extension OpenSuperWhisperApp {
+extension WispApp {
     static func startTranscriptionQueue() {
         Task { @MainActor in
             TranscriptionQueue.shared.startProcessingQueue()
@@ -96,7 +96,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             window.maxSize = NSSize(width: 450, height: 900)
         }
         
-        OpenSuperWhisperApp.startTranscriptionQueue()
+        WispApp.startTranscriptionQueue()
         observeMicrophoneChanges()
         observeRecordingState()
     }
@@ -301,7 +301,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
     
     @objc private func openSettings() {
-        if let window = settingsWindow, window.isVisible {
+        if let window = settingsWindow {
             window.makeKeyAndOrderFront(nil)
             NSApplication.shared.activate(ignoringOtherApps: true)
             return
@@ -315,6 +315,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         window.setContentSize(NSSize(width: 500, height: 600))
         window.minSize = NSSize(width: 450, height: 400)
         window.center()
+        window.isReleasedWhenClosed = false
         window.makeKeyAndOrderFront(nil)
         NSApplication.shared.activate(ignoringOtherApps: true)
         settingsWindow = window
@@ -365,7 +366,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             window.orderFrontRegardless()
             NSApplication.shared.activate(ignoringOtherApps: true)
         } else {
-            let url = URL(string: "openSuperWhisper://openMainWindow")!
+            let url = URL(string: "wisp://openMainWindow")!
             NSWorkspace.shared.open(url)
         }
     }

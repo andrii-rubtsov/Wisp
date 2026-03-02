@@ -2,7 +2,7 @@
 
 ## Context
 
-Wisp (https://github.com/andrii-rubtsov/Wisp) is a macOS dictation/transcription app forked from OpenSuperWhisper. It currently supports two speech recognition engines:
+Wisp (https://github.com/andrii-rubtsov/Wisp) is a macOS dictation/transcription app forked from the original project. It currently supports two speech recognition engines:
 
 1. **Whisper** — via whisper.cpp (C library, bridged to Swift)
 2. **Parakeet TDT 0.6B v3** — via CoreML (NVIDIA's model converted to CoreML format using FluidAudio/AntinomyCollective)
@@ -28,7 +28,7 @@ Canary 1B v2 is more accurate than Whisper and nearly as fast as Parakeet. It su
 
 The engine architecture is clean and plugin-friendly.
 
-**TranscriptionEngine protocol** (`OpenSuperWhisper/Engines/TranscriptionEngine.swift`):
+**TranscriptionEngine protocol** (`Wisp/Engines/TranscriptionEngine.swift`):
 ```swift
 protocol TranscriptionEngine: AnyObject {
     var isModelLoaded: Bool { get }

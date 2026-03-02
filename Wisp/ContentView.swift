@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  OpenSuperWhisper
+//  Wisp
 //
 //  Created by user on 05.02.2025.
 //
@@ -303,13 +303,11 @@ struct ContentView: View {
 
     private var currentShortcutDescription: String {
         let bindings = AppPreferences.shared.shortcutBindings
-        guard let first = bindings.first else { return "" }
-        if first.triggerType == .singleModifier {
-            return first.modifierKey.shortSymbol
-        } else if let shortcut = KeyboardShortcuts.getShortcut(for: first.keyboardShortcutsName) {
-            return shortcut.description
+        guard let first = bindings.first,
+              let shortcut = KeyboardShortcuts.getShortcut(for: first.keyboardShortcutsName) else {
+            return ""
         }
-        return ""
+        return shortcut.description
     }
     
     private func performSearch(_ query: String) {

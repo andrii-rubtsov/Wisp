@@ -22,7 +22,7 @@ install_name_tool -id "@rpath/libomp.dylib" ./build/libomp.dylib
 codesign --force --sign "${CODE_SIGN_IDENTITY}" --timestamp ./build/libomp.dylib
 
 xcodebuild \
-  -scheme "OpenSuperWhisper" \
+  -scheme "Wisp" \
   -configuration Release \
   -destination "platform=macOS,arch=arm64" \
   CODE_SIGN_STYLE=Manual \

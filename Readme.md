@@ -4,9 +4,9 @@
 
 # Wisp
 
-Wisp is a macOS application that provides real-time audio transcription using the Whisper model. It offers a seamless way to record and transcribe audio with customizable settings and keyboard shortcuts.
+Wisp is a macOS menu-bar app for speech-to-text transcription. Press a shortcut, speak, and the transcribed text is instantly pasted into your active app — Slack, Claude Desktop, your IDE, anywhere.
 
-> Wisp is a friendly fork of [OpenSuperWhisper](https://github.com/Starmel/OpenSuperWhisper) by [@Starmel](https://github.com/Starmel) — renamed for brevity, with added Ukrainian language support and a fresh icon.
+> Wisp is a friendly fork of [OpenSuperWhisper](https://github.com/Starmel/OpenSuperWhisper) by [@Starmel](https://github.com/Starmel) — renamed for brevity, with added Ukrainian language support, multiple engine support, and many other improvements.
 
 <p align="center">
 <img src="docs/image.png" width="400" /> <img src="docs/image_indicator.png" width="400" />
@@ -14,17 +14,24 @@ Wisp is a macOS application that provides real-time audio transcription using th
 
 ## Features
 
-- Real-time audio recording and transcription
-- Two transcription engines: [Whisper](https://github.com/ggerganov/whisper.cpp) and [Parakeet](https://github.com/AntinomyCollective/FluidAudio) — download models directly from the app
-- Global keyboard shortcuts — key combination or single modifier key (e.g. Left Cmd, Right Option, Fn)
-- Hold-to-record mode — hold the shortcut to record, release to stop
-- Drag & drop audio files for transcription with queue processing
-- Microphone selection — switch between built-in, external, Bluetooth and iPhone (Apple Continuity) mics from the menu bar
-- Support for multiple languages with auto-detection
+- **Two transcription engines** — choose per-shortcut:
+  - [Whisper](https://github.com/ggerganov/whisper.cpp) (whisper.cpp) — best quality (~2.5% WER), 99 languages, supports initial prompt for context
+  - [Parakeet](https://github.com/FluidInference/FluidAudio) (NVIDIA NeMo) — lightning-fast (~6% WER), 25 European languages
+- **Multiple shortcut bindings** — assign different key combos to different engine/model combinations (up to 5)
+- **Drag & drop** audio files for transcription with queue processing
+- **Microphone selection** — switch between built-in, external, Bluetooth and iPhone (Continuity) mics from the menu bar
+- **Recording indicator** — floating window near your cursor shows recording state
+- **Shortcut controls**:
+  - Press shortcut once to start recording, press again to stop and transcribe
+  - Press **Escape** to cancel recording without transcribing
+  - Shortcuts are ignored while a transcription is in progress
+- **Hallucination filter** — automatically discards phantom outputs from silence ("Thank you", "Subscribe", etc.)
+- **Multiple language support** with auto-detection and translate-to-English option
+- **Model downloads** — download Whisper and Parakeet models directly from the app
 
 ## Installation
 
-### Homebrew (third-party tap)
+### Homebrew
 
 ```shell
 brew install --cask andrii-rubtsov/tap/wisp
@@ -49,8 +56,7 @@ brew install cmake libomp
 ./run.sh build
 ```
 
-In case of problems, consult `.github/workflows/release.yml` which is our CI workflow
-where the app gets built and released automatically on every push to master.
+If you run into issues, see `.github/workflows/release.yml` — the CI workflow builds and releases the app automatically on every push to master.
 
 ## Contributing
 

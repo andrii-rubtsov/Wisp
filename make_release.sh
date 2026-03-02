@@ -52,12 +52,12 @@ echo ""
 echo "📝 Updating version to ${NEW_VERSION} in Xcode project..."
 
 # Update MARKETING_VERSION in project.pbxproj
-sed -i '' "s/MARKETING_VERSION = [^;]*/MARKETING_VERSION = ${NEW_VERSION}/g" OpenSuperWhisper.xcodeproj/project.pbxproj
+sed -i '' "s/MARKETING_VERSION = [^;]*/MARKETING_VERSION = ${NEW_VERSION}/g" Wisp.xcodeproj/project.pbxproj
 
 # Get current PROJECT_VERSION and increment by 1
-CURRENT_PROJECT_VERSION=$(grep -o 'CURRENT_PROJECT_VERSION = [0-9]*' OpenSuperWhisper.xcodeproj/project.pbxproj | head -1 | grep -o '[0-9]*')
+CURRENT_PROJECT_VERSION=$(grep -o 'CURRENT_PROJECT_VERSION = [0-9]*' Wisp.xcodeproj/project.pbxproj | head -1 | grep -o '[0-9]*')
 NEW_PROJECT_VERSION=$((CURRENT_PROJECT_VERSION + 1))
-sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*/CURRENT_PROJECT_VERSION = ${NEW_PROJECT_VERSION}/g" OpenSuperWhisper.xcodeproj/project.pbxproj
+sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*/CURRENT_PROJECT_VERSION = ${NEW_PROJECT_VERSION}/g" Wisp.xcodeproj/project.pbxproj
 
 echo "✅ Updated MARKETING_VERSION to ${NEW_VERSION} and CURRENT_PROJECT_VERSION to ${NEW_PROJECT_VERSION} (was ${CURRENT_PROJECT_VERSION})"
 
@@ -117,7 +117,7 @@ echo "SHA256: $SHA256"
 
 # # Commit version changes
 echo "📝 Committing version changes..."
-git add OpenSuperWhisper.xcodeproj/project.pbxproj
+git add Wisp.xcodeproj/project.pbxproj
 git commit -m "Bump version to ${NEW_VERSION}" || echo "No changes to commit"
 
 # Create git tag

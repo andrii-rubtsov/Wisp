@@ -95,14 +95,14 @@
 			containerPortal = CE57B0202D52C7BB00929AF3 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = CE57B0272D52C7BB00929AF3;
-			remoteInfo = OpenSuperWhisper;
+			remoteInfo = Wisp;
 		};
 		CE57B0442D52C7BC00929AF3 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = CE57B0202D52C7BB00929AF3 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = CE57B0272D52C7BB00929AF3;
-			remoteInfo = OpenSuperWhisper;
+			remoteInfo = Wisp;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -122,9 +122,9 @@
 /* Begin PBXFileReference section */
 		840156402D79E87600FB5FFE /* libwhisper.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = libwhisper.xcodeproj; path = libwhisper/build/libwhisper.xcodeproj; sourceTree = "<group>"; };
 		840156592D79EA1A00FB5FFE /* Bridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bridge.h; sourceTree = "<group>"; };
-		CE57B0282D52C7BB00929AF3 /* OpenSuperWhisper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenSuperWhisper.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		CE57B0392D52C7BC00929AF3 /* OpenSuperWhisperTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenSuperWhisperTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		CE57B0432D52C7BC00929AF3 /* OpenSuperWhisperUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenSuperWhisperUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CE57B0282D52C7BB00929AF3 /* Wisp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wisp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CE57B0392D52C7BC00929AF3 /* WispTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WispTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CE57B0432D52C7BC00929AF3 /* WispUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WispUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE84DF242D550BB400C54EA6 /* Entitlements.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Entitlements.plist; sourceTree = "<group>"; };
 		CE84DF262D550BB400C54EA6 /* 82b82416624d2658e5098eb0a28c15c5-common-args.resp */ = {isa = PBXFileReference; lastKnownFileType = text; path = "82b82416624d2658e5098eb0a28c15c5-common-args.resp"; sourceTree = "<group>"; };
 		CE84DF272D550BB400C54EA6 /* ggml.LinkFileList */ = {isa = PBXFileReference; lastKnownFileType = text; path = ggml.LinkFileList; sourceTree = "<group>"; };
@@ -150,7 +150,7 @@
 		CE84DF432D5557F600C54EA6 /* libwhisper.1.7.4.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libwhisper.1.7.4.dylib; path = ../../../../usr/local/lib/libwhisper.1.7.4.dylib; sourceTree = "<group>"; };
 		CE84DF462D5557FE00C54EA6 /* libggml-metal.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libggml-metal.dylib"; path = "../../../../usr/local/lib/libggml-metal.dylib"; sourceTree = "<group>"; };
 		CE84DF472D5557FE00C54EA6 /* libggml.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libggml.dylib; path = ../../../../usr/local/lib/libggml.dylib; sourceTree = "<group>"; };
-		CE84DF532D55615600C54EA6 /* libwhisper.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libwhisper.a; path = "../../Library/Developer/Xcode/DerivedData/OpenSuperWhisper-hahlbuibzstrsfgaftshbjlrlesk/SourcePackages/checkouts/whisper.cpp/build/src/libwhisper.a"; sourceTree = "<group>"; };
+		CE84DF532D55615600C54EA6 /* libwhisper.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libwhisper.a; path = "../../Library/Developer/Xcode/DerivedData/Wisp-hahlbuibzstrsfgaftshbjlrlesk/SourcePackages/checkouts/whisper.cpp/build/src/libwhisper.a"; sourceTree = "<group>"; };
 		CE84DF632D55762200C54EA6 /* libggml.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libggml.a; sourceTree = "<group>"; };
 		CE84DF642D55762200C54EA6 /* libggml-cpu.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "libggml-cpu.a"; sourceTree = "<group>"; };
 		CE84DF652D55762200C54EA6 /* libggml-metal.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "libggml-metal.a"; sourceTree = "<group>"; };
@@ -165,32 +165,32 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		840156D62D79EE2600FB5FFE /* Exceptions for "OpenSuperWhisper" folder in "OpenSuperWhisper" target */ = {
+		840156D62D79EE2600FB5FFE /* Exceptions for "Wisp" folder in "Wisp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				"OpenSuperWhisper-Info.plist",
+				"Wisp-Info.plist",
 			);
-			target = CE57B0272D52C7BB00929AF3 /* OpenSuperWhisper */;
+			target = CE57B0272D52C7BB00929AF3 /* Wisp */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		CE57B02A2D52C7BB00929AF3 /* OpenSuperWhisper */ = {
+		CE57B02A2D52C7BB00929AF3 /* Wisp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				840156D62D79EE2600FB5FFE /* Exceptions for "OpenSuperWhisper" folder in "OpenSuperWhisper" target */,
+				840156D62D79EE2600FB5FFE /* Exceptions for "Wisp" folder in "Wisp" target */,
 			);
-			path = OpenSuperWhisper;
+			path = Wisp;
 			sourceTree = "<group>";
 		};
-		CE57B03C2D52C7BC00929AF3 /* OpenSuperWhisperTests */ = {
+		CE57B03C2D52C7BC00929AF3 /* WispTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = OpenSuperWhisperTests;
+			path = WispTests;
 			sourceTree = "<group>";
 		};
-		CE57B0462D52C7BC00929AF3 /* OpenSuperWhisperUITests */ = {
+		CE57B0462D52C7BC00929AF3 /* WispUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = OpenSuperWhisperUITests;
+			path = WispUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -273,9 +273,9 @@
 			children = (
 				840156592D79EA1A00FB5FFE /* Bridge.h */,
 				840156402D79E87600FB5FFE /* libwhisper.xcodeproj */,
-				CE57B02A2D52C7BB00929AF3 /* OpenSuperWhisper */,
-				CE57B03C2D52C7BC00929AF3 /* OpenSuperWhisperTests */,
-				CE57B0462D52C7BC00929AF3 /* OpenSuperWhisperUITests */,
+				CE57B02A2D52C7BB00929AF3 /* Wisp */,
+				CE57B03C2D52C7BC00929AF3 /* WispTests */,
+				CE57B0462D52C7BC00929AF3 /* WispUITests */,
 				CE37B60E2D54F274009D6564 /* Frameworks */,
 				CE57B0292D52C7BB00929AF3 /* Products */,
 				CE9DA5672EA8DA4600EB417E /* Recovered References */,
@@ -285,9 +285,9 @@
 		CE57B0292D52C7BB00929AF3 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CE57B0282D52C7BB00929AF3 /* OpenSuperWhisper.app */,
-				CE57B0392D52C7BC00929AF3 /* OpenSuperWhisperTests.xctest */,
-				CE57B0432D52C7BC00929AF3 /* OpenSuperWhisperUITests.xctest */,
+				CE57B0282D52C7BB00929AF3 /* Wisp.app */,
+				CE57B0392D52C7BC00929AF3 /* WispTests.xctest */,
+				CE57B0432D52C7BC00929AF3 /* WispUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -397,9 +397,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		CE57B0272D52C7BB00929AF3 /* OpenSuperWhisper */ = {
+		CE57B0272D52C7BB00929AF3 /* Wisp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CE57B04D2D52C7BC00929AF3 /* Build configuration list for PBXNativeTarget "OpenSuperWhisper" */;
+			buildConfigurationList = CE57B04D2D52C7BC00929AF3 /* Build configuration list for PBXNativeTarget "Wisp" */;
 			buildPhases = (
 				CE57B0242D52C7BB00929AF3 /* Sources */,
 				CE57B0252D52C7BB00929AF3 /* Frameworks */,
@@ -411,21 +411,21 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				CE57B02A2D52C7BB00929AF3 /* OpenSuperWhisper */,
+				CE57B02A2D52C7BB00929AF3 /* Wisp */,
 			);
-			name = OpenSuperWhisper;
+			name = Wisp;
 			packageProductDependencies = (
 				CE84E17C2D56550B00C54EA6 /* KeyboardShortcuts */,
 				CE0EAD6D2D56ACA80067FDEE /* GRDB */,
 				CE84E17E2D56550B00C54EA7 /* FluidAudio */,
 			);
-			productName = OpenSuperWhisper;
-			productReference = CE57B0282D52C7BB00929AF3 /* OpenSuperWhisper.app */;
+			productName = Wisp;
+			productReference = CE57B0282D52C7BB00929AF3 /* Wisp.app */;
 			productType = "com.apple.product-type.application";
 		};
-		CE57B0382D52C7BC00929AF3 /* OpenSuperWhisperTests */ = {
+		CE57B0382D52C7BC00929AF3 /* WispTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CE57B0502D52C7BC00929AF3 /* Build configuration list for PBXNativeTarget "OpenSuperWhisperTests" */;
+			buildConfigurationList = CE57B0502D52C7BC00929AF3 /* Build configuration list for PBXNativeTarget "WispTests" */;
 			buildPhases = (
 				CE57B0352D52C7BC00929AF3 /* Sources */,
 				CE57B0362D52C7BC00929AF3 /* Frameworks */,
@@ -437,18 +437,18 @@
 				CE57B03B2D52C7BC00929AF3 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				CE57B03C2D52C7BC00929AF3 /* OpenSuperWhisperTests */,
+				CE57B03C2D52C7BC00929AF3 /* WispTests */,
 			);
-			name = OpenSuperWhisperTests;
+			name = WispTests;
 			packageProductDependencies = (
 			);
-			productName = OpenSuperWhisperTests;
-			productReference = CE57B0392D52C7BC00929AF3 /* OpenSuperWhisperTests.xctest */;
+			productName = WispTests;
+			productReference = CE57B0392D52C7BC00929AF3 /* WispTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		CE57B0422D52C7BC00929AF3 /* OpenSuperWhisperUITests */ = {
+		CE57B0422D52C7BC00929AF3 /* WispUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CE57B0532D52C7BC00929AF3 /* Build configuration list for PBXNativeTarget "OpenSuperWhisperUITests" */;
+			buildConfigurationList = CE57B0532D52C7BC00929AF3 /* Build configuration list for PBXNativeTarget "WispUITests" */;
 			buildPhases = (
 				CE57B03F2D52C7BC00929AF3 /* Sources */,
 				CE57B0402D52C7BC00929AF3 /* Frameworks */,
@@ -460,13 +460,13 @@
 				CE57B0452D52C7BC00929AF3 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				CE57B0462D52C7BC00929AF3 /* OpenSuperWhisperUITests */,
+				CE57B0462D52C7BC00929AF3 /* WispUITests */,
 			);
-			name = OpenSuperWhisperUITests;
+			name = WispUITests;
 			packageProductDependencies = (
 			);
-			productName = OpenSuperWhisperUITests;
-			productReference = CE57B0432D52C7BC00929AF3 /* OpenSuperWhisperUITests.xctest */;
+			productName = WispUITests;
+			productReference = CE57B0432D52C7BC00929AF3 /* WispUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -492,7 +492,7 @@
 					};
 				};
 			};
-			buildConfigurationList = CE57B0232D52C7BB00929AF3 /* Build configuration list for PBXProject "OpenSuperWhisper" */;
+			buildConfigurationList = CE57B0232D52C7BB00929AF3 /* Build configuration list for PBXProject "Wisp" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -517,9 +517,9 @@
 			);
 			projectRoot = "";
 			targets = (
-				CE57B0272D52C7BB00929AF3 /* OpenSuperWhisper */,
-				CE57B0382D52C7BC00929AF3 /* OpenSuperWhisperTests */,
-				CE57B0422D52C7BC00929AF3 /* OpenSuperWhisperUITests */,
+				CE57B0272D52C7BB00929AF3 /* Wisp */,
+				CE57B0382D52C7BC00929AF3 /* WispTests */,
+				CE57B0422D52C7BC00929AF3 /* WispUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -632,12 +632,12 @@
 /* Begin PBXTargetDependency section */
 		CE57B03B2D52C7BC00929AF3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = CE57B0272D52C7BB00929AF3 /* OpenSuperWhisper */;
+			target = CE57B0272D52C7BB00929AF3 /* Wisp */;
 			targetProxy = CE57B03A2D52C7BC00929AF3 /* PBXContainerItemProxy */;
 		};
 		CE57B0452D52C7BC00929AF3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = CE57B0272D52C7BB00929AF3 /* OpenSuperWhisper */;
+			target = CE57B0272D52C7BB00929AF3 /* Wisp */;
 			targetProxy = CE57B0442D52C7BC00929AF3 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -771,7 +771,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = OpenSuperWhisper/OpenSuperWhisper.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Wisp/Wisp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -779,7 +779,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_ASSET_PATHS = "\"OpenSuperWhisper/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Wisp/Preview Content\"";
 				DEVELOPMENT_TEAM = 8LLDD7HWZK;
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8LLDD7HWZK;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -795,11 +795,11 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/libwhisper/**",
 				);
-				INFOPLIST_FILE = "OpenSuperWhisper/OpenSuperWhisper-Info.plist";
+				INFOPLIST_FILE = "Wisp/Wisp-Info.plist";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "OpenSuperWhisper needs accessibility access to provide system-wide functionality.";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Wisp needs accessibility access to provide system-wide functionality.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "OpenSuperWhisper needs microphone access to record audio for transcription.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Wisp needs microphone access to record audio for transcription.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -832,7 +832,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = OpenSuperWhisper/OpenSuperWhisper.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Wisp/Wisp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -840,7 +840,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_ASSET_PATHS = "\"OpenSuperWhisper/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Wisp/Preview Content\"";
 				DEVELOPMENT_TEAM = 8LLDD7HWZK;
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8LLDD7HWZK;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -857,11 +857,11 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/libwhisper/**",
 				);
-				INFOPLIST_FILE = "OpenSuperWhisper/OpenSuperWhisper-Info.plist";
+				INFOPLIST_FILE = "Wisp/Wisp-Info.plist";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "OpenSuperWhisper needs accessibility access to provide system-wide functionality.";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Wisp needs accessibility access to provide system-wide functionality.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "OpenSuperWhisper needs microphone access to record audio for transcription.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Wisp needs microphone access to record audio for transcription.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -911,7 +911,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/Bridge.h";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OpenSuperWhisper.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OpenSuperWhisper";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Wisp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Wisp";
 			};
 			name = Debug;
 		};
@@ -935,7 +935,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/Bridge.h";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OpenSuperWhisper.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OpenSuperWhisper";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Wisp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Wisp";
 			};
 			name = Release;
 		};
@@ -952,7 +952,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = OpenSuperWhisper;
+				TEST_TARGET_NAME = Wisp;
 			};
 			name = Debug;
 		};
@@ -969,14 +969,14 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = OpenSuperWhisper;
+				TEST_TARGET_NAME = Wisp;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		CE57B0232D52C7BB00929AF3 /* Build configuration list for PBXProject "OpenSuperWhisper" */ = {
+		CE57B0232D52C7BB00929AF3 /* Build configuration list for PBXProject "Wisp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CE57B04B2D52C7BC00929AF3 /* Debug */,
@@ -985,7 +985,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CE57B04D2D52C7BC00929AF3 /* Build configuration list for PBXNativeTarget "OpenSuperWhisper" */ = {
+		CE57B04D2D52C7BC00929AF3 /* Build configuration list for PBXNativeTarget "Wisp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CE57B04E2D52C7BC00929AF3 /* Debug */,
@@ -994,7 +994,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CE57B0502D52C7BC00929AF3 /* Build configuration list for PBXNativeTarget "OpenSuperWhisperTests" */ = {
+		CE57B0502D52C7BC00929AF3 /* Build configuration list for PBXNativeTarget "WispTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CE57B0512D52C7BC00929AF3 /* Debug */,
@@ -1003,7 +1003,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CE57B0532D52C7BC00929AF3 /* Build configuration list for PBXNativeTarget "OpenSuperWhisperUITests" */ = {
+		CE57B0532D52C7BC00929AF3 /* Build configuration list for PBXNativeTarget "WispUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CE57B0542D52C7BC00929AF3 /* Debug */,

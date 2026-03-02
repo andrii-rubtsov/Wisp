@@ -1,24 +1,8 @@
 import Foundation
 import KeyboardShortcuts
 
-enum ShortcutTriggerType: String, Codable, CaseIterable, Identifiable {
-    case singleModifier
-    case keyCombination
-
-    var id: String { rawValue }
-
-    var displayName: String {
-        switch self {
-        case .singleModifier: return "Single Key"
-        case .keyCombination: return "Key Combo"
-        }
-    }
-}
-
 struct ShortcutBinding: Codable, Identifiable, Equatable {
     let id: UUID
-    var triggerType: ShortcutTriggerType
-    var modifierKey: ModifierKey         // used when triggerType == .singleModifier
     var keyComboSlot: String             // "binding-0" etc, used for KeyboardShortcuts.Name
     var engine: String                   // "whisper" or "fluidaudio"
     var modelIdentifier: String          // whisper: model filename, fluidaudio: "v2"/"v3"
@@ -27,8 +11,6 @@ struct ShortcutBinding: Codable, Identifiable, Equatable {
 
     init(
         id: UUID = UUID(),
-        triggerType: ShortcutTriggerType = .singleModifier,
-        modifierKey: ModifierKey = .leftCommand,
         keyComboSlot: String = "",
         engine: String,
         modelIdentifier: String,
@@ -36,8 +18,6 @@ struct ShortcutBinding: Codable, Identifiable, Equatable {
         initialPrompt: String = ""
     ) {
         self.id = id
-        self.triggerType = triggerType
-        self.modifierKey = modifierKey
         self.keyComboSlot = keyComboSlot
         self.engine = engine
         self.modelIdentifier = modelIdentifier
@@ -48,8 +28,6 @@ struct ShortcutBinding: Codable, Identifiable, Equatable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
-        triggerType = try container.decode(ShortcutTriggerType.self, forKey: .triggerType)
-        modifierKey = try container.decode(ModifierKey.self, forKey: .modifierKey)
         keyComboSlot = try container.decode(String.self, forKey: .keyComboSlot)
         engine = try container.decode(String.self, forKey: .engine)
         modelIdentifier = try container.decode(String.self, forKey: .modelIdentifier)
@@ -96,7 +74,7 @@ extension ShortcutBinding {
 extension AppPreferences {
     var shortcutBindings: [ShortcutBinding] {
         get {
-            guard let json = UserDefaults.standard.string(forKey: "shortcutBindingsV2"),
+            guard let json = UserDefaults.standard.string(forKey: "shortcutBindingsV3"),
                   let data = json.data(using: .utf8),
                   let bindings = try? JSONDecoder().decode([ShortcutBinding].self, from: data) else {
                 return []
@@ -106,72 +84,44 @@ extension AppPreferences {
         set {
             if let data = try? JSONEncoder().encode(newValue),
                let json = String(data: data, encoding: .utf8) {
-                UserDefaults.standard.set(json, forKey: "shortcutBindingsV2")
+                UserDefaults.standard.set(json, forKey: "shortcutBindingsV3")
             }
         }
     }
 
-    /// Migrate from v1 shortcutBindings (no triggerType) or legacy modifierOnlyHotkey.
-    func migrateToShortcutBindingsV2() {
-        let migrated = UserDefaults.standard.bool(forKey: "shortcutBindingsV2Migrated")
+    /// Migrate from v2 shortcutBindings (had triggerType/modifierKey) to v3 (key combo only).
+    func migrateToShortcutBindingsV3() {
+        let migrated = UserDefaults.standard.bool(forKey: "shortcutBindingsV3Migrated")
         guard !migrated else { return }
 
-        // Try migrating from v1 bindings first
-        if let json = UserDefaults.standard.string(forKey: "shortcutBindings"),
+        // Try migrating from v2 bindings — drop singleModifier fields, keep key combo ones
+        if let json = UserDefaults.standard.string(forKey: "shortcutBindingsV2"),
            let data = json.data(using: .utf8),
-           let oldBindings = try? JSONDecoder().decode([ShortcutBindingV1].self, from: data),
+           let oldBindings = try? JSONDecoder().decode([ShortcutBindingV2].self, from: data),
            !oldBindings.isEmpty {
-            let newBindings = oldBindings.enumerated().map { (index, old) in
+            let comboBindings = oldBindings.filter { $0.triggerType == "keyCombination" }
+            let newBindings = comboBindings.map { old in
                 ShortcutBinding(
                     id: old.id,
-                    triggerType: .singleModifier,
-                    modifierKey: old.modifierKey,
-                    keyComboSlot: ShortcutBinding.slotNames[index],
+                    keyComboSlot: old.keyComboSlot,
                     engine: old.engine,
                     modelIdentifier: old.modelIdentifier,
-                    modelDisplayName: old.modelDisplayName
+                    modelDisplayName: old.modelDisplayName,
+                    initialPrompt: old.initialPrompt ?? ""
                 )
             }
-            shortcutBindings = Array(newBindings.prefix(ShortcutBinding.maxBindings))
-            UserDefaults.standard.set(true, forKey: "shortcutBindingsV2Migrated")
-            return
-        }
-
-        // Try migrating from legacy modifierOnlyHotkey
-        let modKey = ModifierKey(rawValue: modifierOnlyHotkey) ?? .none
-        if modKey != .none {
-            let engine = selectedEngine
-            let modelId: String
-            let modelName: String
-            if engine == "fluidaudio" {
-                modelId = fluidAudioModelVersion
-                modelName = modelId == "v2" ? "Parakeet v2" : "Parakeet v3"
-            } else {
-                let path = selectedWhisperModelPath ?? ""
-                modelId = (path as NSString).lastPathComponent
-                modelName = modelId.isEmpty ? "Default" : modelId
-                    .replacingOccurrences(of: "ggml-", with: "")
-                    .replacingOccurrences(of: ".bin", with: "")
+            if !newBindings.isEmpty {
+                shortcutBindings = Array(newBindings.prefix(ShortcutBinding.maxBindings))
             }
-            shortcutBindings = [ShortcutBinding(
-                triggerType: .singleModifier,
-                modifierKey: modKey,
-                keyComboSlot: "binding-0",
-                engine: engine,
-                modelIdentifier: modelId,
-                modelDisplayName: modelName
-            )]
         }
 
-        UserDefaults.standard.set(true, forKey: "shortcutBindingsV2Migrated")
+        UserDefaults.standard.set(true, forKey: "shortcutBindingsV3Migrated")
     }
 
     /// Ensure at least one binding exists; create a default with Parakeet v3.
     func ensureDefaultBinding() {
         guard shortcutBindings.isEmpty else { return }
         shortcutBindings = [ShortcutBinding(
-            triggerType: .singleModifier,
-            modifierKey: .leftCommand,
             keyComboSlot: "binding-0",
             engine: "fluidaudio",
             modelIdentifier: "v3",
@@ -180,12 +130,14 @@ extension AppPreferences {
     }
 }
 
-// MARK: - V1 migration helper
+// MARK: - V2 migration helper
 
-private struct ShortcutBindingV1: Codable, Identifiable {
+private struct ShortcutBindingV2: Codable {
     let id: UUID
-    var modifierKey: ModifierKey
-    var engine: String
-    var modelIdentifier: String
-    var modelDisplayName: String
+    let triggerType: String
+    let keyComboSlot: String
+    let engine: String
+    let modelIdentifier: String
+    let modelDisplayName: String
+    let initialPrompt: String?
 }

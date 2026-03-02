@@ -99,12 +99,6 @@ final class AppPreferences {
     @OptionalUserDefault(key: "selectedMicrophoneData")
     var selectedMicrophoneData: Data?
     
-    @UserDefault(key: "modifierOnlyHotkey", defaultValue: "none")
-    var modifierOnlyHotkey: String
-    
-    @UserDefault(key: "holdToRecord", defaultValue: true)
-    var holdToRecord: Bool
-
     @UserDefault(key: "indicatorPosition", defaultValue: IndicatorPosition.nearCursor.rawValue)
     var indicatorPositionRaw: String
 

@@ -49,18 +49,18 @@ Recording Behavior
 ```
 
 ### Files likely affected
-- `OpenSuperWhisper/ShortcutManager.swift` — register multiple hotkeys
-- `OpenSuperWhisper/Settings.swift` — UI for shortcut list, data model for bindings
-- `OpenSuperWhisper/TranscriptionService.swift` — accept engine+model parameter when starting recording
-- `OpenSuperWhisper/ModifierKeyMonitor.swift` — may need to handle multiple modifier keys
-- `OpenSuperWhisper/ContentView.swift` — shortcut display
+- `Wisp/ShortcutManager.swift` — register multiple hotkeys
+- `Wisp/Settings.swift` — UI for shortcut list, data model for bindings
+- `Wisp/TranscriptionService.swift` — accept engine+model parameter when starting recording
+- `Wisp/ModifierKeyMonitor.swift` — may need to handle multiple modifier keys
+- `Wisp/ContentView.swift` — shortcut display
 
 ---
 
 ## Feature 2: Custom Menu Bar Icon
 
 ### Current behavior
-- Menu bar shows a generic icon (cat/default from OpenSuperWhisper fork)
+- Menu bar shows a generic icon (cat/default from original fork)
 - Clicking shows menu: Wisp, Language >, Microphone >, Quit
 
 ### Desired behavior
@@ -73,7 +73,7 @@ Recording Behavior
 - The icon should be a simplified side profile of lips/mouth with 2-3 sound wave arcs
 - Must be monochrome (black on transparent) — macOS will automatically invert for dark menu bar when using template images
 - Place in `Assets.xcassets` as an Image Set with "Render As: Template Image"
-- Reference in code wherever `NSStatusBar` icon is set (likely in `OpenSuperWhisperApp.swift` or `AppDelegate`)
+- Reference in code wherever `NSStatusBar` icon is set (likely in `WispApp.swift` or `AppDelegate`)
 
 ### Design spec for the icon
 - 18x18pt canvas
@@ -119,9 +119,9 @@ Recording Behavior
 **Recommendation:** Start with **Approach A** (frame animation) as it's the most visually distinctive and matches the user's request for "waves pulsing." Fall back to Approach B if animation proves janky.
 
 ### Files likely affected
-- `OpenSuperWhisper/OpenSuperWhisperApp.swift` or wherever NSStatusItem is created
+- `Wisp/WispApp.swift` or wherever NSStatusItem is created
 - `Assets.xcassets` — new image sets for menu bar icon frames
-- `OpenSuperWhisper/AudioRecorder.swift` or `MicrophoneService.swift` — hook into recording start/stop to trigger animation
+- `Wisp/AudioRecorder.swift` or `MicrophoneService.swift` — hook into recording start/stop to trigger animation
 
 ### macOS menu bar icon technical notes
 - Use `NSStatusItem` with `NSStatusBarButton`

@@ -45,7 +45,7 @@ jobs:
 
       - name: Build Wisp
         run: |
-          xcodebuild -scheme OpenSuperWhisper -configuration Release -jobs 8 \
+          xcodebuild -scheme Wisp -configuration Release -jobs 8 \
             -derivedDataPath build -quiet -destination 'platform=macOS,arch=arm64' \
             -skipPackagePluginValidation -skipMacroValidation \
             -UseModernBuildSystem=YES -clonedSourcePackagesDirPath SourcePackages \
@@ -108,7 +108,6 @@ jobs:
 
           sed -i '' "s/version \".*\"/version \"${VERSION}\"/" Casks/wisp.rb
           sed -i '' "s/sha256 \".*\"/sha256 \"${SHA}\"/" Casks/wisp.rb
-          sed -i '' 's/app "OpenSuperWhisper.app"/app "Wisp.app"/' Casks/wisp.rb
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

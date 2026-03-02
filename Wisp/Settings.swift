@@ -111,12 +111,6 @@ class SettingsViewModel: ObservableObject {
         }
     }
 
-    @Published var holdToRecord: Bool {
-        didSet {
-            AppPreferences.shared.holdToRecord = holdToRecord
-        }
-    }
-
     @Published var indicatorPosition: IndicatorPosition {
         didSet {
             AppPreferences.shared.indicatorPosition = indicatorPosition
@@ -144,7 +138,6 @@ class SettingsViewModel: ObservableObject {
         self.beamSize = prefs.beamSize
         self.debugMode = prefs.debugMode
         self.playSoundOnRecordStart = prefs.playSoundOnRecordStart
-        self.holdToRecord = prefs.holdToRecord
         self.indicatorPosition = prefs.indicatorPosition
         self.shortcutBindings = prefs.shortcutBindings
 
@@ -161,16 +154,9 @@ class SettingsViewModel: ObservableObject {
     func addShortcutBinding() {
         guard shortcutBindings.count < ShortcutBinding.maxBindings else { return }
 
-        // Pick the first unused modifier key for single-modifier type
-        let usedKeys = Set(shortcutBindings.filter { $0.triggerType == .singleModifier }.map { $0.modifierKey })
-        let available = ModifierKey.allCases.filter { $0 != .none && !usedKeys.contains($0) }
-        let key = available.first ?? .leftCommand
-
         let slot = ShortcutBinding.nextAvailableSlot(excluding: shortcutBindings)
 
         shortcutBindings.append(ShortcutBinding(
-            triggerType: .singleModifier,
-            modifierKey: key,
             keyComboSlot: slot,
             engine: "fluidaudio",
             modelIdentifier: "v3",
@@ -182,23 +168,11 @@ class SettingsViewModel: ObservableObject {
         // Don't allow removing the last binding
         guard shortcutBindings.count > 1 else { return }
 
-        // Clean up KeyboardShortcuts for removed combo binding
-        if let binding = shortcutBindings.first(where: { $0.id == id }),
-           binding.triggerType == .keyCombination {
+        if let binding = shortcutBindings.first(where: { $0.id == id }) {
             KeyboardShortcuts.reset(binding.keyboardShortcutsName)
         }
 
         shortcutBindings.removeAll { $0.id == id }
-    }
-
-    /// Returns modifier keys available for a given binding (excludes keys used by other bindings).
-    func availableModifierKeys(for bindingId: UUID) -> [ModifierKey] {
-        let usedByOthers = Set(
-            shortcutBindings
-                .filter { $0.id != bindingId && $0.triggerType == .singleModifier }
-                .map { $0.modifierKey }
-        )
-        return ModifierKey.allCases.filter { $0 != .none && !usedByOthers.contains($0) }
     }
 
     /// Returns available model choices for a given engine (all models, not just downloaded).
@@ -499,21 +473,21 @@ struct SettingsDownloadableModels {
             isDownloaded: false,
             url: URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin?download=true")!,
             size: 1624,
-            description: "High accuracy, best quality"
+            description: "Best quality (~2.5% WER). 99 languages. Supports initial prompt."
         ),
         SettingsDownloadableModel(
             name: "Turbo V3 medium",
             isDownloaded: false,
             url: URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q8_0.bin?download=true")!,
             size: 874,
-            description: "Balanced speed and accuracy"
+            description: "Near-best quality, quantized for speed. 99 languages. Supports initial prompt."
         ),
         SettingsDownloadableModel(
             name: "Turbo V3 small",
             isDownloaded: false,
             url: URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin?download=true")!,
             size: 574,
-            description: "Fastest processing"
+            description: "Fast, compact quantization. 99 languages. Supports initial prompt."
         )
     ]
 }
@@ -601,7 +575,6 @@ struct SettingsView: View {
                         ForEach($viewModel.shortcutBindings) { $binding in
                             ShortcutBindingRow(
                                 binding: $binding,
-                                availableModifierKeys: viewModel.availableModifierKeys(for: binding.id),
                                 modelChoices: viewModel.availableModelChoices(for: binding.engine),
                                 canDelete: viewModel.shortcutBindings.count > 1,
                                 onDelete: { viewModel.removeShortcutBinding(id: binding.id) },
@@ -635,20 +608,6 @@ struct SettingsView: View {
                         .foregroundColor(.primary)
 
                     VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Hold to Record")
-                                    .font(.subheadline)
-                                Text("Hold the shortcut to record, release to stop")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            Toggle("", isOn: $viewModel.holdToRecord)
-                                .toggleStyle(SwitchToggleStyle(tint: Color.accentColor))
-                                .labelsHidden()
-                        }
-
                         HStack {
                             Text("Play sound when recording starts")
                                 .font(.subheadline)
@@ -1014,7 +973,6 @@ struct SettingsView: View {
 
 struct ShortcutBindingRow: View {
     @Binding var binding: ShortcutBinding
-    let availableModifierKeys: [ModifierKey]
     let modelChoices: [(id: String, name: String, downloaded: Bool)]
     let canDelete: Bool
     let onDelete: () -> Void
@@ -1050,28 +1008,9 @@ struct ShortcutBindingRow: View {
     var body: some View {
         VStack(spacing: 6) {
             HStack(spacing: 8) {
-                // Trigger type picker
-                Picker("", selection: $binding.triggerType) {
-                    ForEach(ShortcutTriggerType.allCases) { type in
-                        Text(type.displayName).tag(type)
-                    }
-                }
-                .pickerStyle(.menu)
-                .frame(width: 110)
-
-                // Key configuration
-                if binding.triggerType == .singleModifier {
-                    Picker("", selection: $binding.modifierKey) {
-                        ForEach(availableModifierKeys) { key in
-                            Text(key.displayName).tag(key)
-                        }
-                    }
-                    .pickerStyle(.menu)
+                // Key combination recorder
+                KeyboardShortcuts.Recorder("", name: binding.keyboardShortcutsName)
                     .frame(width: 150)
-                } else {
-                    KeyboardShortcuts.Recorder("", name: binding.keyboardShortcutsName)
-                        .frame(width: 150)
-                }
 
                 // Engine picker
                 Picker("", selection: $binding.engine) {
@@ -1203,11 +1142,11 @@ struct ShortcutBindingRow: View {
             if binding.engine == "whisper" {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Initial Prompt:")
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
                     TextEditor(text: $binding.initialPrompt)
-                        .font(.caption)
-                        .frame(height: 50)
+                        .font(.system(size: 13))
+                        .frame(height: 70)
                         .padding(4)
                         .background(Color(.textBackgroundColor))
                         .cornerRadius(4)
@@ -1258,14 +1197,14 @@ struct SettingsFluidAudioModels {
             name: "Parakeet v3",
             version: "v3",
             isDownloaded: false,
-            description: "Multilingual, 25 languages",
+            description: "Lightning fast (~6% WER). 25 European languages. No prompt support.",
             size: 550
         ),
         SettingsFluidAudioModel(
             name: "Parakeet v2",
             version: "v2",
             isDownloaded: false,
-            description: "English-only, higher recall",
+            description: "Lightning fast (~6% WER). English only. No prompt support.",
             size: 230
         )
     ]
@@ -1290,7 +1229,7 @@ struct OnboardingUnifiedModels {
         OnboardingUnifiedModel(
             name: "Whisper V3 Large",
             isDownloaded: false,
-            description: "High accuracy, best quality",
+            description: "Best quality (~2.5% WER). 99 languages. Supports initial prompt.",
             type: .whisper(
                 url: URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin?download=true")!,
                 size: 1624
@@ -1299,19 +1238,19 @@ struct OnboardingUnifiedModels {
         OnboardingUnifiedModel(
             name: "Parakeet v3",
             isDownloaded: false,
-            description: "Fastest processing and accurate",
+            description: "Lightning fast (~6% WER). 25 European languages. No prompt support.",
             type: .parakeet(version: "v3")
         ),
         OnboardingUnifiedModel(
             name: "Parakeet v2",
             isDownloaded: false,
-            description: "Fastest processing and English-only, higher recall",
+            description: "Lightning fast (~6% WER). English only. No prompt support.",
             type: .parakeet(version: "v2")
         ),
         OnboardingUnifiedModel(
             name: "Whisper Medium",
             isDownloaded: false,
-            description: "Balanced speed and accuracy",
+            description: "Near-best quality, quantized for speed. 99 languages. Supports initial prompt.",
             type: .whisper(
                 url: URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q8_0.bin?download=true")!,
                 size: 874
@@ -1320,7 +1259,7 @@ struct OnboardingUnifiedModels {
         OnboardingUnifiedModel(
             name: "Whisper Small",
             isDownloaded: false,
-            description: "Very fast processing",
+            description: "Fast, compact quantization. 99 languages. Supports initial prompt.",
             type: .whisper(
                 url: URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin?download=true")!,
                 size: 574
