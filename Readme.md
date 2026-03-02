@@ -44,7 +44,8 @@ Use two shortcut bindings — one for accuracy, one for speed:
 ### Homebrew
 
 ```shell
-brew install --cask andrii-rubtsov/tap/wisp
+brew tap andrii-rubtsov/tap
+brew install --cask wisp
 ```
 
 ### Manual
