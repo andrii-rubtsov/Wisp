@@ -24,6 +24,7 @@ class IndicatorViewModel: ObservableObject {
     @Published var isVisible = false
     
     var delegate: IndicatorViewDelegate?
+    var activeBinding: ShortcutBinding?
     private var blinkTimer: Timer?
     private var hideTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
@@ -149,7 +150,27 @@ class IndicatorViewModel: ObservableObject {
                             ))
                         }
 
-                        insertText(text)
+                        let binding = await MainActor.run { self.activeBinding }
+                        let shouldCopy = binding?.copyToClipboard ?? true
+                        let shouldInsert = binding?.insertIntoActiveApp ?? true
+                        let method = binding?.insertionMethod ?? .accessibilityAPI
+
+                        if shouldCopy {
+                            ClipboardUtil.copyToClipboard(text)
+                        }
+
+                        if shouldInsert {
+                            switch method {
+                            case .accessibilityAPI:
+                                ClipboardUtil.insertViaAccessibility(text)
+                            case .commandVEmulation:
+                                if !shouldCopy {
+                                    ClipboardUtil.copyToClipboard(text)
+                                }
+                                ClipboardUtil.simulatePaste()
+                            }
+                        }
+
                         print("Transcription result: \(text)")
                     }
                 } catch {
@@ -171,10 +192,6 @@ class IndicatorViewModel: ObservableObject {
                 }
             }
         }
-    }
-    
-    func insertText(_ text: String) {
-        ClipboardUtil.insertText(text)
     }
     
     private func startBlinking() {

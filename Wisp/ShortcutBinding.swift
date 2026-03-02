@@ -1,6 +1,20 @@
 import Foundation
 import KeyboardShortcuts
 
+enum InsertionMethod: String, Codable, CaseIterable, Identifiable {
+    case accessibilityAPI = "accessibilityAPI"
+    case commandVEmulation = "commandVEmulation"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .accessibilityAPI: return "Accessibility API"
+        case .commandVEmulation: return "Cmd+V Emulation"
+        }
+    }
+}
+
 struct ShortcutBinding: Codable, Identifiable, Equatable {
     let id: UUID
     var keyComboSlot: String             // "binding-0" etc, used for KeyboardShortcuts.Name
@@ -8,6 +22,9 @@ struct ShortcutBinding: Codable, Identifiable, Equatable {
     var modelIdentifier: String          // whisper: model filename, fluidaudio: "v2"/"v3"
     var modelDisplayName: String         // human-readable: "Turbo V3 large", "Parakeet v3"
     var initialPrompt: String            // whisper only: per-binding initial prompt
+    var copyToClipboard: Bool            // copy transcription to system clipboard
+    var insertIntoActiveApp: Bool        // insert text into focused app after transcription
+    var insertionMethod: InsertionMethod // how to insert: AX API or Cmd+V
 
     init(
         id: UUID = UUID(),
@@ -15,7 +32,10 @@ struct ShortcutBinding: Codable, Identifiable, Equatable {
         engine: String,
         modelIdentifier: String,
         modelDisplayName: String,
-        initialPrompt: String = ""
+        initialPrompt: String = "",
+        copyToClipboard: Bool = true,
+        insertIntoActiveApp: Bool = true,
+        insertionMethod: InsertionMethod = .accessibilityAPI
     ) {
         self.id = id
         self.keyComboSlot = keyComboSlot
@@ -23,6 +43,9 @@ struct ShortcutBinding: Codable, Identifiable, Equatable {
         self.modelIdentifier = modelIdentifier
         self.modelDisplayName = modelDisplayName
         self.initialPrompt = initialPrompt
+        self.copyToClipboard = copyToClipboard
+        self.insertIntoActiveApp = insertIntoActiveApp
+        self.insertionMethod = insertionMethod
     }
 
     init(from decoder: Decoder) throws {
@@ -33,6 +56,9 @@ struct ShortcutBinding: Codable, Identifiable, Equatable {
         modelIdentifier = try container.decode(String.self, forKey: .modelIdentifier)
         modelDisplayName = try container.decode(String.self, forKey: .modelDisplayName)
         initialPrompt = try container.decodeIfPresent(String.self, forKey: .initialPrompt) ?? ""
+        copyToClipboard = try container.decodeIfPresent(Bool.self, forKey: .copyToClipboard) ?? true
+        insertIntoActiveApp = try container.decodeIfPresent(Bool.self, forKey: .insertIntoActiveApp) ?? true
+        insertionMethod = try container.decodeIfPresent(InsertionMethod.self, forKey: .insertionMethod) ?? .accessibilityAPI
     }
 
     /// The KeyboardShortcuts.Name for this binding's key combo slot.

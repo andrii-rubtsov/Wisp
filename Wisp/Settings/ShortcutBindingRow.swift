@@ -192,6 +192,33 @@ struct ShortcutBindingRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 2)
             }
+
+            // Output behavior
+            VStack(spacing: 6) {
+                HStack {
+                    Toggle("Copy to clipboard", isOn: $binding.copyToClipboard)
+                        .toggleStyle(SwitchToggleStyle(tint: Color.accentColor))
+                        .font(.subheadline)
+                    Spacer()
+                }
+
+                HStack {
+                    Toggle("Insert into active app", isOn: $binding.insertIntoActiveApp)
+                        .toggleStyle(SwitchToggleStyle(tint: Color.accentColor))
+                        .font(.subheadline)
+                    Spacer()
+                    if binding.insertIntoActiveApp {
+                        Picker("", selection: $binding.insertionMethod) {
+                            ForEach(InsertionMethod.allCases) { method in
+                                Text(method.displayName).tag(method)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .frame(width: 180)
+                    }
+                }
+            }
+            .padding(.top, 4)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)

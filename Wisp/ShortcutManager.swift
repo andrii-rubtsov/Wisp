@@ -10,6 +10,7 @@ class ShortcutManager {
 
     private var activeVm: IndicatorViewModel?
     private var bindings: [ShortcutBinding] = []
+    private var activeBinding: ShortcutBinding?
 
     private init() {
         print("ShortcutManager init")
@@ -90,6 +91,7 @@ class ShortcutManager {
 
     private func applyBinding(forSlot slot: String) {
         guard let binding = bindings.first(where: { $0.keyComboSlot == slot }) else { return }
+        activeBinding = binding
         binding.apply()
         Task { @MainActor in
             TranscriptionService.shared.reloadEngine()
@@ -112,6 +114,7 @@ class ShortcutManager {
                     indicatorPoint = cursorPosition
                 }
                 let vm = IndicatorWindowManager.shared.show(nearPoint: indicatorPoint)
+                vm.activeBinding = self.activeBinding
                 vm.startRecording()
                 self.activeVm = vm
             } else {

@@ -11,7 +11,10 @@ final class ShortcutBindingTests: XCTestCase {
             engine: "whisper",
             modelIdentifier: "ggml-large-v3-turbo.bin",
             modelDisplayName: "Turbo V3 large",
-            initialPrompt: "transcribe clearly"
+            initialPrompt: "transcribe clearly",
+            copyToClipboard: false,
+            insertIntoActiveApp: true,
+            insertionMethod: .commandVEmulation
         )
 
         let data = try JSONEncoder().encode(binding)
@@ -23,6 +26,9 @@ final class ShortcutBindingTests: XCTestCase {
         XCTAssertEqual(decoded.modelIdentifier, "ggml-large-v3-turbo.bin")
         XCTAssertEqual(decoded.modelDisplayName, "Turbo V3 large")
         XCTAssertEqual(decoded.initialPrompt, "transcribe clearly")
+        XCTAssertEqual(decoded.copyToClipboard, false)
+        XCTAssertEqual(decoded.insertIntoActiveApp, true)
+        XCTAssertEqual(decoded.insertionMethod, .commandVEmulation)
     }
 
     // MARK: - Backwards-compatible decoding (missing initialPrompt)
@@ -44,6 +50,10 @@ final class ShortcutBindingTests: XCTestCase {
         XCTAssertEqual(binding.initialPrompt, "")
         XCTAssertEqual(binding.engine, "fluidaudio")
         XCTAssertEqual(binding.modelIdentifier, "v3")
+        // New fields should default when missing from old JSON
+        XCTAssertEqual(binding.copyToClipboard, true)
+        XCTAssertEqual(binding.insertIntoActiveApp, true)
+        XCTAssertEqual(binding.insertionMethod, .accessibilityAPI)
     }
 
     // MARK: - Slot management
